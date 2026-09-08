@@ -73,7 +73,7 @@
     {
       "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
       "WatchWidth": 200.0,
-      "WatchHeight": 200.0,
+      "WatchHeight": 40.0,
       "Id": "1a7e82fd931c44debcd3b2f23a1995e6",
       "NodeType": "ExtensionNode",
       "Inputs": [
@@ -747,6 +747,12 @@
       "IsHidden": "False"
     },
     {
+      "Start": "3c65e027c5894247ae7329b7f13cc8b4",
+      "End": "576c8dd8431f408dbe6f582f49800fe4",
+      "Id": "712e7910492142d7acb1e94fb897b6e4",
+      "IsHidden": "False"
+    },
+    {
       "Start": "79a1ddce75d74cb3a1c317f4315c4e67",
       "End": "ba05fc7c39b54334bec90cad6f30a377",
       "Id": "e2f2dda627c74365baf5ef7ce3e6fc61",
@@ -829,12 +835,6 @@
       "End": "7838a26c7580449dbfbfe28e0b7aef48",
       "Id": "558e9126702e46b9ac780cd8060f8254",
       "IsHidden": "False"
-    },
-    {
-      "Start": "5b55335d11c9481082c77321a1efa5bb",
-      "End": "576c8dd8431f408dbe6f582f49800fe4",
-      "Id": "d044f43b56d146008b5ef048e66730a8",
-      "IsHidden": "False"
     }
   ],
   "Dependencies": [],
@@ -914,8 +914,8 @@
         "IsSetAsOutput": true,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": 2333.6238449733087,
-        "Y": -471.41554679277687
+        "X": 2241.4610047721744,
+        "Y": 154.22834918800248
       },
       {
         "Id": "b9c153363f424b6291971d7026da14b0",
@@ -1099,8 +1099,8 @@
       }
     ],
     "Annotations": [],
-    "X": -1058.9890533563184,
-    "Y": 684.3737486112316,
-    "Zoom": 1.021893993599487
+    "X": -126.00509514650798,
+    "Y": 467.8648258111122,
+    "Zoom": 0.5642187229312385
   }
 }
