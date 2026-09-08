@@ -1,0 +1,942 @@
+{
+  "Uuid": "3c9d0464-8643-5ffe-96e5-ab1769818209",
+  "IsCustomNode": false,
+  "Description": "Returns a number for the calculated occupancy based on the room type of the selected room.",
+  "Name": "Calculate Room Occupancy Load",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "Math": {
+        "Key": "DSCore.Math",
+        "Value": "DSCoreNodes.dll"
+      }
+    }
+  },
+  "Inputs": [
+    {
+      "Id": "ef905353c2984716b7971854b0b99fdd",
+      "Name": "Allowable Area per Occupant",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "15",
+      "NumberType": "Double",
+      "Description": "Creates a number",
+      "SelectedIndex": 0
+    },
+    {
+      "Id": "8f3c5a1d395f49faa2acace968e18c8b",
+      "Name": "Select a Room",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "",
+      "Description": "Select a model element from the Revit document filtered by Category.",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "683e1260747e49bdb4a5b8a86a988cf6",
+      "Name": "Calculation Results",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Room.Name",
+      "Id": "73515ccaa34149569248f741dde0155d",
+      "Inputs": [
+        {
+          "Id": "6e3cefb928b740b796e6c663b2a18b2b",
+          "Name": "room",
+          "Description": "Revit.Elements.Room",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "620162b56ea74108b94d382bb423a679",
+          "Name": "string",
+          "Description": "string",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get room name\n\nRoom.Name: string"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.DoubleInput, CoreNodeModels",
+      "NodeType": "NumberInputNode",
+      "NumberType": "Double",
+      "InputValue": 15.0,
+      "Id": "ef905353c2984716b7971854b0b99fdd",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "a29502211e79462bae4861242e5ad326",
+          "Name": "",
+          "Description": "Double",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a number"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# Import DocumentManager and TransactionManager\r\nimport clr\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nimport Autodesk\r\nfrom Autodesk.Revit.DB import *\r\n\r\n\r\n# Set up inputs\r\nvalue = IN[0]\r\n\r\n# Execute definition\r\nprojectUnits = Document.GetUnits(doc).GetFormatOptions(SpecTypeId.Area).GetUnitTypeId()\r\ndisplayUnit = LabelUtils.GetLabelForUnit(projectUnits)\r\n\r\n# Assign your output to the OUT variable\r\nOUT = displayUnit",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "09c25b2cb86d4a0d902cddb1cc2a7024",
+      "Inputs": [
+        {
+          "Id": "543f78b2b4c847f49a9b16b594507a89",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a2dcd9149e0f4d5ca957fab0bde301ab",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "683e1260747e49bdb4a5b8a86a988cf6",
+      "Inputs": [
+        {
+          "Id": "e00cdc7b969a4e739366809d7f099ea1",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ad0e49d818e845bfada65de7244f8b30",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//declare a few variables to combine for output\nroomName;\narea;\noccupancyLoad;\n//build output\n//first line prefix + name + return line\nroomString + roomName + \"\\n\" +\n//second line prefix + area + return line\nareaString + area + \" \" + units+ \"\\n\" +\n//blank line\n\"\\n\"+\n//third line prefix + occupancy load\noccupancyString + occupancyLoad;",
+      "Id": "8035d7319d7441db8a45c6365df27829",
+      "Inputs": [
+        {
+          "Id": "41272ca94fcc46aa8cb0dbccba0b0db2",
+          "Name": "roomName",
+          "Description": "roomName",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "19514ac999004d31ad8b7ad98a509f70",
+          "Name": "area",
+          "Description": "area",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "28064b953f2d469f996f32e24122872c",
+          "Name": "occupancyLoad",
+          "Description": "occupancyLoad",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3c981aa7fc724da5994c2ce6a0b55ded",
+          "Name": "roomString",
+          "Description": "roomString",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "89cedcd8a865424c9b7fcc2f3831ba43",
+          "Name": "areaString",
+          "Description": "areaString",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "460d62dae96948988103e33cd59f9246",
+          "Name": "units",
+          "Description": "units",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "5b6ca108e7e34dd7930586b4fa1a66e6",
+          "Name": "occupancyString",
+          "Description": "occupancyString",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "45eef96004504f04bd887d4d3250d710",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0b3e97a79b18494a80e1834b3af68374",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b3e2a5eec4a14935850d39dea49cfd40",
+          "Name": "",
+          "Description": "Value of expression at line 4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "5061a2b90db246f18e5e3c88adf2290c",
+          "Name": "",
+          "Description": "Value of expression at line 7",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Area",
+      "Id": "625d0bf5f6134e808ac42e8559d0322c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "7fffe9cdb2244a77911d673930de96dc",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.GetParameterValueByName@string",
+      "Id": "498c6a0d221941f392c211bc5b4ca48f",
+      "Inputs": [
+        {
+          "Id": "a89b0252bf0042a9a07a45ef31f3ac74",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "8fbb425caf674a2099bc31fb223588cb",
+          "Name": "parameterName",
+          "Description": "The name of the parameter whose value you want to obtain.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "add7761021b747debc314901bf24b295",
+          "Name": "var[]..[]",
+          "Description": "var[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get the value of one of the element's parameters.\n\nElement.GetParameterValueByName (parameterName: string): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.Math.Ceiling@double",
+      "Id": "8489c25148f74f96a5dbfdccc71d22b6",
+      "Inputs": [
+        {
+          "Id": "0e9ab643d663496a8812c1739ffbca78",
+          "Name": "number",
+          "Description": "Number to round up.\n\ndouble",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ce60fa8ed9e84003b63d4da192e52fd1",
+          "Name": "int",
+          "Description": "First integer greater than the number",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the first integer greater than the number\n\nMath.Ceiling (number: double): int"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "/@var[]..[],var[]..[]",
+      "Id": "2faf6e81d9104d099cfc686026ff6350",
+      "Inputs": [
+        {
+          "Id": "279459d633774e11aefbf2d0644a24e5",
+          "Name": "x",
+          "Description": "Integer or double value\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "aef4224588084d548445bb397a04051a",
+          "Name": "y",
+          "Description": "Integer or double value\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "83eb7e6f5aa942598d01134ab3c349d0",
+          "Name": "double",
+          "Description": "Result of division",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns division of x over y\n\n/ (x: var[]..[], y: var[]..[]): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Room Name: \";\n\"Area: ~ \";\n\"Occupancy Load: \";",
+      "Id": "df9f94bebf69404eb3aec4119025d0e4",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "50d6e21b63074413be6ba5a9aa41c14b",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "221b1036453e4a5d92d1da93d3b15363",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "7438315c92274b709f1de7674b870251",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DSCore.Math.Ceiling@double",
+      "Id": "e100e0bf18894470915b592992b15944",
+      "Inputs": [
+        {
+          "Id": "2fa1e9d1401b43a59474e9f73a430720",
+          "Name": "number",
+          "Description": "Number to round up.\n\ndouble",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "824c61954c2b4b199616e703fc10a251",
+          "Name": "int",
+          "Description": "First integer greater than the number",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Returns the first integer greater than the number\n\nMath.Ceiling (number: double): int"
+    },
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 503,
+      "SelectedString": "OST_Rooms",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [],
+      "Id": "8f3c5a1d395f49faa2acace968e18c8b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "a5b94d2ee3584bc282961579e74233e1",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "620162b56ea74108b94d382bb423a679",
+      "End": "41272ca94fcc46aa8cb0dbccba0b0db2",
+      "Id": "6f402515b24b447ab33f772083a19717",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a29502211e79462bae4861242e5ad326",
+      "End": "aef4224588084d548445bb397a04051a",
+      "Id": "0ded93f72ca6466198cc838e1837a30b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a2dcd9149e0f4d5ca957fab0bde301ab",
+      "End": "460d62dae96948988103e33cd59f9246",
+      "Id": "863db9f238524a579dd4fbb7d439b163",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5061a2b90db246f18e5e3c88adf2290c",
+      "End": "e00cdc7b969a4e739366809d7f099ea1",
+      "Id": "bff89c56d8194840aace4666bfca3faa",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7fffe9cdb2244a77911d673930de96dc",
+      "End": "8fbb425caf674a2099bc31fb223588cb",
+      "Id": "67c0a34cfb1b48e0b19b4c38d1ffc83c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "add7761021b747debc314901bf24b295",
+      "End": "543f78b2b4c847f49a9b16b594507a89",
+      "Id": "3412d908b5e74084b56e2cd6806b5be8",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "add7761021b747debc314901bf24b295",
+      "End": "279459d633774e11aefbf2d0644a24e5",
+      "Id": "6f09918009684e778f5701e3a830f7c9",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "add7761021b747debc314901bf24b295",
+      "End": "2fa1e9d1401b43a59474e9f73a430720",
+      "Id": "bf885c944b534c86adc7021eaedbbc82",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ce60fa8ed9e84003b63d4da192e52fd1",
+      "End": "28064b953f2d469f996f32e24122872c",
+      "Id": "4746fa4a761a49838ed311b17a7b02e7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "83eb7e6f5aa942598d01134ab3c349d0",
+      "End": "0e9ab643d663496a8812c1739ffbca78",
+      "Id": "6e1f5221caf248d08539d6165b1c508f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "50d6e21b63074413be6ba5a9aa41c14b",
+      "End": "3c981aa7fc724da5994c2ce6a0b55ded",
+      "Id": "93aaa38ec32b49a9af6b4366c0bb5cf7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "221b1036453e4a5d92d1da93d3b15363",
+      "End": "89cedcd8a865424c9b7fcc2f3831ba43",
+      "Id": "128bcfa60a5948699f2c8d0680963a2c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7438315c92274b709f1de7674b870251",
+      "End": "5b6ca108e7e34dd7930586b4fa1a66e6",
+      "Id": "58c4383faf0d47ffb5f6f3a919036735",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "824c61954c2b4b199616e703fc10a251",
+      "End": "19514ac999004d31ad8b7ad98a509f70",
+      "Id": "c7e52767b9d04dfcb6471cc3965ef3ac",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a5b94d2ee3584bc282961579e74233e1",
+      "End": "6e3cefb928b740b796e6c663b2a18b2b",
+      "Id": "f14fb6ebdf37431684e2b08038f1e361",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a5b94d2ee3584bc282961579e74233e1",
+      "End": "a89b0252bf0042a9a07a45ef31f3ac74",
+      "Id": "5d0d15234fa148448fe5ca2a48451c06",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "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",
+  "GraphDocumentationURL": "https://help.autodesk.com/view/RVT/2026/ENU/?guid=RevitDynamo_Dynamo_Player_Sample_Graphs_Calculate_Room_Occupancy_Load_html",
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.13",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "2.0",
+      "Data": {}
+    }
+  ],
+  "Author": "Autodesk",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.17.0.3472",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Room.Name",
+        "ShowGeometry": true,
+        "Id": "73515ccaa34149569248f741dde0155d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2755.0923385904457,
+        "Y": 1170.8504258015323
+      },
+      {
+        "Name": "Allowable Area per Occupant",
+        "ShowGeometry": true,
+        "Id": "ef905353c2984716b7971854b0b99fdd",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1442.7316512180905,
+        "Y": 1499.3184524889359
+      },
+      {
+        "Name": "GetProjectUnits",
+        "ShowGeometry": true,
+        "Id": "09c25b2cb86d4a0d902cddb1cc2a7024",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2758.2357727887411,
+        "Y": 1740.3362786086002
+      },
+      {
+        "Name": "Calculation Results",
+        "ShowGeometry": true,
+        "Id": "683e1260747e49bdb4a5b8a86a988cf6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 3985.7690120778457,
+        "Y": 1270.5237122006231
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "8035d7319d7441db8a45c6365df27829",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 3397.4560488079992,
+        "Y": 1231.230841584746
+      },
+      {
+        "Name": "String",
+        "ShowGeometry": true,
+        "Id": "625d0bf5f6134e808ac42e8559d0322c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1922.6671467430076,
+        "Y": 1390.2016441518933
+      },
+      {
+        "Name": "Element.GetParameterValueByName",
+        "ShowGeometry": true,
+        "Id": "498c6a0d221941f392c211bc5b4ca48f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2102.4000181803694,
+        "Y": 1310.020373620408
+      },
+      {
+        "Name": "Math.Ceiling",
+        "ShowGeometry": true,
+        "Id": "8489c25148f74f96a5dbfdccc71d22b6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2761.2544914153855,
+        "Y": 1459.4781141559874
+      },
+      {
+        "Name": "/",
+        "ShowGeometry": true,
+        "Id": "2faf6e81d9104d099cfc686026ff6350",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2541.1096344126154,
+        "Y": 1459.4781141559874
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "df9f94bebf69404eb3aec4119025d0e4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 3098.7848107113286,
+        "Y": 1407.370865391405
+      },
+      {
+        "Name": "Math.Ceiling",
+        "ShowGeometry": true,
+        "Id": "e100e0bf18894470915b592992b15944",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2763.3803314715747,
+        "Y": 1310.3671970592864
+      },
+      {
+        "Name": "Select a Room",
+        "ShowGeometry": true,
+        "Id": "8f3c5a1d395f49faa2acace968e18c8b",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1434.7400516494995,
+        "Y": 1150.6582493472183
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "956baf7420544303b53947030531767f",
+        "Title": "Area Per Occupant",
+        "DescriptionText": "Enter area allowed per occupant in project units (Ft² or M²)",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "ef905353c2984716b7971854b0b99fdd",
+          "5605d8de63d4459e8edc24c77ce5bda8"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1428.2316512180905,
+        "Top": 1358.3184524889359,
+        "Width": 317.5,
+        "Height": 273.0,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1426.3184524889359,
+        "InitialHeight": 218.0,
+        "TextblockHeight": 58.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "57ac53f472f84ee7b23ed71b48d2bed0",
+        "Title": "Get Units",
+        "DescriptionText": "Retrieve units from file for output.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "09c25b2cb86d4a0d902cddb1cc2a7024"
+        ],
+        "HasNestedGroups": false,
+        "Left": 2748.2357727887411,
+        "Top": 1658.3362786086002,
+        "Width": 211.0,
+        "Height": 214.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1740.3362786086002,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 72.0,
+        "Background": "#FFE8F7AD"
+      },
+      {
+        "Id": "4a298ae5a4904734b8f51b9ff91cb5ba",
+        "Title": "Build Output",
+        "DescriptionText": "combine strings and return output for Dynamo Player. By using addition in a code block we convert numbers to string automatically",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "683e1260747e49bdb4a5b8a86a988cf6",
+          "8035d7319d7441db8a45c6365df27829",
+          "df9f94bebf69404eb3aec4119025d0e4"
+        ],
+        "HasNestedGroups": false,
+        "Left": 3088.7848107113286,
+        "Top": 1165.230841584746,
+        "Width": 1183.9842013665175,
+        "Height": 403.0,
+        "FontSize": 30.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1231.230841584746,
+        "InitialHeight": 321.140023806659,
+        "TextblockHeight": 56.0,
+        "Background": "#FFFFC999"
+      },
+      {
+        "Id": "6932d974ddbb41dca9e0189a79f0ef25",
+        "Title": "Room Occupancy Load",
+        "DescriptionText": "Calculate based on selection and area/occupant",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "03dbd0cbcdd6402296db461dcec68a86"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1124.4761841791935,
+        "Top": 1091.9641816748608,
+        "Width": 269.5,
+        "Height": 218.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1260.4641816748608,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 158.5,
+        "Background": "#FFFFFFFF"
+      },
+      {
+        "Id": "199aa0860623407fab3e9ddf992f6bce",
+        "Title": "Calculations",
+        "DescriptionText": "Calculate occupancy load given area and allowable area per occupant",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "2faf6e81d9104d099cfc686026ff6350",
+          "8489c25148f74f96a5dbfdccc71d22b6",
+          "498c6a0d221941f392c211bc5b4ca48f",
+          "625d0bf5f6134e808ac42e8559d0322c",
+          "e100e0bf18894470915b592992b15944",
+          "73515ccaa34149569248f741dde0155d"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1912.6671467430076,
+        "Top": 1111.8504258015323,
+        "Width": 1052.7131847285671,
+        "Height": 509.62768835445513,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1170.8504258015323,
+        "InitialHeight": 433.62768835445513,
+        "TextblockHeight": 49.0,
+        "Background": "#FFE8F7AD"
+      },
+      {
+        "Id": "a3bead422a514455b410d5a62c981cc5",
+        "Title": "Room Selection",
+        "DescriptionText": "Select room to run calculation on",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "8f3c5a1d395f49faa2acace968e18c8b"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1424.7400516494995,
+        "Top": 1091.6582493472183,
+        "Width": 415.5,
+        "Height": 236.0,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1150.6582493472183,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 49.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "03dbd0cbcdd6402296db461dcec68a86",
+        "Title": "See graph properties for more information",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 1134.4761841791935,
+        "Top": 1268.4641816748608,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "5605d8de63d4459e8edc24c77ce5bda8",
+        "Title": "Enter the area allowed per occupant in project units (sq. ft. or m²)",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 1438.2316512180905,
+        "Top": 1434.3184524889359,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676",
+        "PinnedNode": "ef905353c2984716b7971854b0b99fdd"
+      }
+    ],
+    "X": -531.74524124520417,
+    "Y": -279.46665220250168,
+    "Zoom": 0.49515824931277275
+  }
+}

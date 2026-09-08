@@ -1,0 +1,824 @@
+{
+  "Uuid": "3c9d0464-8643-5ffe-96e5-ab1769818209",
+  "IsCustomNode": false,
+  "Description": "Creates a series of levels above or below the selected level.",
+  "Name": "Add Levels",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "Math": {
+        "Key": "DSCore.Math",
+        "Value": "DSCoreNodes.dll"
+      }
+    }
+  },
+  "Inputs": [
+    {
+      "Id": "d2a3cfdc6ed7465382a63b400e6ce5f0",
+      "Name": "Distance from Selected Level",
+      "Type": "string",
+      "Type2": "string",
+      "Value": "10 ft",
+      "Description": "Converts an input string with unit values into the equivalent value of the expression",
+      "SelectedIndex": 0
+    },
+    {
+      "Id": "c6a8f4a207024b5e9765e37d76111edf",
+      "Name": "Number of New Levels to Create",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "4",
+      "MaximumValue": 100.0,
+      "MinimumValue": 1.0,
+      "StepValue": 1.0,
+      "NumberType": "Integer",
+      "Description": "Produces integer values",
+      "SelectedIndex": 0
+    },
+    {
+      "Id": "c7141e89f38f470585f0731f94b54baa",
+      "Name": "Select a Level",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "",
+      "Description": "Select a model element from the Revit document filtered by Category.",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "48f572deed814a9e8e61e55d5e65127b",
+      "Name": "New Levels",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Level.ByLevelAndOffset@Revit.Elements.Level,double",
+      "Id": "26c3d228962c4ca786dd05acefa4f259",
+      "Inputs": [
+        {
+          "Id": "40f7651019e041a3962e6f337fa93a0e",
+          "Name": "level",
+          "Description": "Level",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3d72c0a386c64b968b9f3d58e982b3c9",
+          "Name": "offset",
+          "Description": "double",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "81249db18eba4bbfbb1410edcd3bf8a6",
+          "Name": "Level",
+          "Description": "Level",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Create a Revit Level given it's length offset from an existing level\n\nLevel.ByLevelAndOffset (level: Level, offset: double): Level"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "48f572deed814a9e8e61e55d5e65127b",
+      "Inputs": [
+        {
+          "Id": "ea1dceb27e96421190fb0814e31c43b9",
+          "Name": "",
+          "Description": "Node to evaluate.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d5142711bd1d41afb9c032886a647fae",
+          "Name": "",
+          "Description": "Watch contents.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Sequence, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "8e1b82622a0548cfaa3bed65213e3f4f",
+      "Inputs": [
+        {
+          "Id": "87267da112e64ef5b7fe37d72f7e812f",
+          "Name": "start",
+          "Description": "Number or letter to start the sequence at\r\nDefault value: 0",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "8ade3b229b71437fa9164bbe85611995",
+          "Name": "amount",
+          "Description": "Amount of numbers in the sequence\r\nDefault value: 10",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "769dca82ad1a46aeb64967abeea95141",
+          "Name": "step",
+          "Description": "Space between numbers or letters\r\nDefault value: 1",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "475012008e724ed1aa455d3f070b9369",
+          "Name": "seq",
+          "Description": "New sequence",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Creates a sequence of numbers"
+    },
+    {
+      "ConcreteType": "UnitsUI.UnitInput, UnitsUI",
+      "UnitType": "autodesk.unit.unit:feet-1.0.1",
+      "InputValue": "10 ft",
+      "NodeType": "ExtensionNode",
+      "Id": "d2a3cfdc6ed7465382a63b400e6ce5f0",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "516d2b06c31b45fd8d9bf2cf70ac55cb",
+          "Name": "Value",
+          "Description": "Converted value of expresion",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ec2c766e04e141e8884435441a0940b7",
+          "Name": "Unit",
+          "Description": "Selected Unit",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Converts an input string with unit values into the equivalent value of the expression"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NodeType": "NumberInputNode",
+      "NumberType": "Integer",
+      "InputValue": 4,
+      "MaximumValue": 100,
+      "MinimumValue": 1,
+      "StepValue": 1,
+      "Id": "c6a8f4a207024b5e9765e37d76111edf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "3e4d9bc3880b400185d6e5be628276de",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DynamoUnits.Utilities.ConvertByUnits@double,DynamoUnits.Unit,DynamoUnits.Unit",
+      "Id": "ce14ccaf97374e70940314953377aa12",
+      "Inputs": [
+        {
+          "Id": "a355c78a34164d5b8dd93030609fb9de",
+          "Name": "value",
+          "Description": "Value to convert\n\ndouble",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "4582ee632ba744f09abd658ea38f2a91",
+          "Name": "fromUnit",
+          "Description": "Unit object\n\nUnit",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d0759480b98e4c7086bac2af1e2a8aef",
+          "Name": "toUnit",
+          "Description": "Unit object\n\nUnit",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d42aab93a3364a0387a394232c1b0e9c",
+          "Name": "double",
+          "Description": "Converted value",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Converts a value from one Unit System to another Unit System\n\nUtilities.ConvertByUnits (value: double, fromUnit: Unit, toUnit: Unit): double"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# Import DocumentManager and TransactionManager\r\nimport clr\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nimport Autodesk\r\nfrom Autodesk.Revit.DB import *\r\n\r\n\r\n# Revit Document\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n# Get the ForgeType from the Document object\r\nforgeTypeId = doc.GetUnits().GetFormatOptions(SpecTypeId.Length).GetUnitTypeId()\r\n\r\n# Temporary workaround for Forge SDK unit types that are missing in Revit 2023:\r\nif (forgeTypeId.Equals(UnitTypeId.FeetFractionalInches)) or (forgeTypeId.Equals(UnitTypeId.StationingFeet)):\r\n    forgeTypeId = UnitTypeId.Feet;\r\n\r\nif forgeTypeId.Equals(UnitTypeId.StationingSurveyFeet):\r\n    forgeTypeId = UnitTypeId.UsSurveyFeet;\r\n\r\nif forgeTypeId.Equals(UnitTypeId.FractionalInches):\r\n    forgeTypeId = UnitTypeId.Inches;\r\n\r\nif (forgeTypeId.Equals(UnitTypeId.MetersCentimeters)) or (forgeTypeId.Equals(UnitTypeId.StationingMeters)):\r\n    forgeTypeId = UnitTypeId.Meters;\r\n\r\n# Assign your output to the OUT variable\r\nOUT = forgeTypeId.TypeId",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "ab09c63fd25a4026a4c0bbd5ecffe505",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "cdd6168a6e3c4143b0f58f0386b197ee",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "DynamoUnits.Unit.ByTypeID@string",
+      "Id": "1c1446aca38c4289acd02b491de25b1c",
+      "Inputs": [
+        {
+          "Id": "2e71b7802d454aa2bc8c5f078b2618fb",
+          "Name": "typeId",
+          "Description": "Forge TypeId string\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5e366c124f4f49f79f877faca90eb830",
+          "Name": "Unit",
+          "Description": "Unit object",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Creates a Unit object from its Forge type schema identifier string.\n\nUnit.ByTypeID (typeId: string): Unit"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.FromObject, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "037c6b1b9a594298adf9f753bf410aca",
+      "Inputs": [
+        {
+          "Id": "99feae53a528411da2f88079f0692e89",
+          "Name": "object",
+          "Description": "Object to be serialized",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "723351a1d8474f6eb34a5ab7ee462319",
+          "Name": "string",
+          "Description": "String representation of the object",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Converts an object to a string representation"
+    },
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 289,
+      "SelectedString": "OST_Levels",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [],
+      "Id": "c7141e89f38f470585f0731f94b54baa",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "c8a6f5d2f86e4d30878b57062921e607",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "81249db18eba4bbfbb1410edcd3bf8a6",
+      "End": "ea1dceb27e96421190fb0814e31c43b9",
+      "Id": "361d6e1e2450477ca10ada859475f3cc",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "475012008e724ed1aa455d3f070b9369",
+      "End": "3d72c0a386c64b968b9f3d58e982b3c9",
+      "Id": "3c992ea68b97460b98137e9c7741e4c9",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "516d2b06c31b45fd8d9bf2cf70ac55cb",
+      "End": "a355c78a34164d5b8dd93030609fb9de",
+      "Id": "3b2ef7765c214f9fb79ba70a04fb0191",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ec2c766e04e141e8884435441a0940b7",
+      "End": "4582ee632ba744f09abd658ea38f2a91",
+      "Id": "0244ed90c49f46e4a5ff14f08b70f0ff",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3e4d9bc3880b400185d6e5be628276de",
+      "End": "8ade3b229b71437fa9164bbe85611995",
+      "Id": "a80c5d448ad24637a4fc1c177d8d64cb",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d42aab93a3364a0387a394232c1b0e9c",
+      "End": "87267da112e64ef5b7fe37d72f7e812f",
+      "Id": "63b46a0e0c164aa395bd4cccaea1238f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d42aab93a3364a0387a394232c1b0e9c",
+      "End": "769dca82ad1a46aeb64967abeea95141",
+      "Id": "a923aa7870b14ebd98c109a86310efd1",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "cdd6168a6e3c4143b0f58f0386b197ee",
+      "End": "99feae53a528411da2f88079f0692e89",
+      "Id": "bc0a7c8e801c4fc4bfc296d043ab65cf",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5e366c124f4f49f79f877faca90eb830",
+      "End": "d0759480b98e4c7086bac2af1e2a8aef",
+      "Id": "b33e261e55bc4041b1c6b8fcedd4a3b1",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "723351a1d8474f6eb34a5ab7ee462319",
+      "End": "2e71b7802d454aa2bc8c5f078b2618fb",
+      "Id": "4b3bd33af7204845a2a415ba14669ff7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "c8a6f5d2f86e4d30878b57062921e607",
+      "End": "40f7651019e041a3962e6f337fa93a0e",
+      "Id": "357d0e90e1ac431494d1fb84024fa406",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "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",
+  "GraphDocumentationURL": "https://help.autodesk.com/view/RVT/2026/ENU/?guid=RevitDynamo_Dynamo_Player_Sample_Graphs_Add_Levels_html",
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.13",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "2.0",
+      "Data": {}
+    }
+  ],
+  "Author": "Autodesk",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.17.0.3472",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Level.ByLevelAndOffset",
+        "ShowGeometry": true,
+        "Id": "26c3d228962c4ca786dd05acefa4f259",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2451.5054303159914,
+        "Y": 1436.488303286407
+      },
+      {
+        "Name": "New Levels",
+        "ShowGeometry": true,
+        "Id": "48f572deed814a9e8e61e55d5e65127b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": 2740.4564111301611,
+        "Y": 1441.2600486628971
+      },
+      {
+        "Name": "Sequence",
+        "ShowGeometry": true,
+        "Id": "8e1b82622a0548cfaa3bed65213e3f4f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2155.0046096214014,
+        "Y": 1687.9832952239628
+      },
+      {
+        "Name": "Distance from Selected Level",
+        "ShowGeometry": true,
+        "Id": "d2a3cfdc6ed7465382a63b400e6ce5f0",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1154.27456704525,
+        "Y": 1808.79311075358
+      },
+      {
+        "Name": "Number of New Levels to Create",
+        "ShowGeometry": true,
+        "Id": "c6a8f4a207024b5e9765e37d76111edf",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1116.2745670452473,
+        "Y": 1994.7515489564018
+      },
+      {
+        "Name": "Utilities.ConvertByUnits",
+        "ShowGeometry": true,
+        "Id": "ce14ccaf97374e70940314953377aa12",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1922.2106118321915,
+        "Y": 2250.5481052704722
+      },
+      {
+        "Name": "GetProjectUnitsTypeId",
+        "ShowGeometry": true,
+        "Id": "ab09c63fd25a4026a4c0bbd5ecffe505",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1118.6097564558634,
+        "Y": 2422.0158939225107
+      },
+      {
+        "Name": "Unit.ByTypeID",
+        "ShowGeometry": true,
+        "Id": "1c1446aca38c4289acd02b491de25b1c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1631.4735958455778,
+        "Y": 2420.821300025154
+      },
+      {
+        "Name": "String from Object",
+        "ShowGeometry": true,
+        "Id": "037c6b1b9a594298adf9f753bf410aca",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1392.3493824349575,
+        "Y": 2420.9172080842422
+      },
+      {
+        "Name": "Select a Level",
+        "ShowGeometry": true,
+        "Id": "c7141e89f38f470585f0731f94b54baa",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1092.2648384298911,
+        "Y": 1317.6610657208319
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "18ab4170461a4cac988a72b40b3e6a0c",
+        "Title": "Selection",
+        "DescriptionText": "User Selections",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "c7141e89f38f470585f0731f94b54baa",
+          "df5bc0541b904e6095d011161e2399a6"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1082.2648384298911,
+        "Top": 1185.6610657208319,
+        "Width": 415.5,
+        "Height": 309.0,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1244.6610657208319,
+        "InitialHeight": 145.69300994261789,
+        "TextblockHeight": 49.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "76153791a83f4d9a9e25833001551bbe",
+        "Title": "Distance Calculation",
+        "DescriptionText": "Compute new level spacing.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "8e1b82622a0548cfaa3bed65213e3f4f"
+        ],
+        "HasNestedGroups": false,
+        "Left": 2145.0046096214014,
+        "Top": 1600.4832952239628,
+        "Width": 216.5,
+        "Height": 284.5,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1687.9832952239628,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 77.5,
+        "Background": "#FFD8D8D8"
+      },
+      {
+        "Id": "b6babcbbb5214c25af969edd93677e29",
+        "Title": "Level Creation",
+        "DescriptionText": "Create levels based on existing and spacing.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "26c3d228962c4ca786dd05acefa4f259"
+        ],
+        "HasNestedGroups": false,
+        "Left": 2441.5054303159914,
+        "Top": 1368.488303286407,
+        "Width": 269.5,
+        "Height": 230.0,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1436.488303286407,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 58.0,
+        "Background": "#FFFFAA45"
+      },
+      {
+        "Id": "7b257bf9a70f46beb19d99eca743d0e7",
+        "Title": "Output",
+        "DescriptionText": "Newly created levels",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "48f572deed814a9e8e61e55d5e65127b"
+        ],
+        "HasNestedGroups": false,
+        "Left": 2730.4564111301611,
+        "Top": 1368.2600486628971,
+        "Width": 297.0,
+        "Height": 371.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1441.2600486628971,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFD8D8D8"
+      },
+      {
+        "Id": "098016e53bad47acaaaee9c3f7367d89",
+        "Title": "Create Levels",
+        "DescriptionText": "Add Levels Above or Below Selected Level",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "9741fec17cee4ad5924ac7849c22b97a"
+        ],
+        "HasNestedGroups": false,
+        "Left": 777.03041002500379,
+        "Top": 1363.0611445120592,
+        "Width": 271.99999999999989,
+        "Height": 122.5,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1436.0611445120592,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFFFFF"
+      },
+      {
+        "Id": "8042580e822d41ae858d1bda61fb150b",
+        "Title": "Spacing and Quantity",
+        "DescriptionText": "Enter spacing for new levels and the number of levels to create. (negative distance results in levels below)",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "c6a8f4a207024b5e9765e37d76111edf",
+          "d2a3cfdc6ed7465382a63b400e6ce5f0",
+          "2b7e1fa010f64a9ebeb7930b75798fed"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1106.2745670452473,
+        "Top": 1667.79311075358,
+        "Width": 368.0,
+        "Height": 458.958438202822,
+        "FontSize": 24.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1735.79311075358,
+        "InitialHeight": 403.75843820282012,
+        "TextblockHeight": 58.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "be069cc613dd4761ae1b2f531b6c624f",
+        "Title": "Get Document Units",
+        "DescriptionText": "<Double click here to edit group description>",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "ce14ccaf97374e70940314953377aa12",
+          "ab09c63fd25a4026a4c0bbd5ecffe505",
+          "037c6b1b9a594298adf9f753bf410aca",
+          "1c1446aca38c4289acd02b491de25b1c"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1108.6097564558634,
+        "Top": 2177.5481052704722,
+        "Width": 1076.1008553763284,
+        "Height": 376.46778865203851,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 2250.5481052704722,
+        "InitialHeight": 316.467788652039,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "9741fec17cee4ad5924ac7849c22b97a",
+        "Title": "See graph properties for more information.",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 787.03041002500379,
+        "Top": 1444.0611445120592,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "2b7e1fa010f64a9ebeb7930b75798fed",
+        "Title": "Enter the spacing between levels including the units. For example: 1200 mm, 8 ft, 3.5 m.",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 1150.52456704525,
+        "Top": 1743.79311075358,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676",
+        "PinnedNode": "d2a3cfdc6ed7465382a63b400e6ce5f0"
+      },
+      {
+        "Id": "df5bc0541b904e6095d011161e2399a6",
+        "Title": "Select a level to use as the starting point for the other levels.",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 1151.7648384298911,
+        "Top": 1252.6610657208319,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676",
+        "PinnedNode": "c7141e89f38f470585f0731f94b54baa"
+      }
+    ],
+    "X": -482.78314505783294,
+    "Y": -817.69881047083936,
+    "Zoom": 0.67671841463599669
+  }
+}

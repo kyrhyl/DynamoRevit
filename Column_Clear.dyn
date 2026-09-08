@@ -1,0 +1,207 @@
+{
+  "Uuid": "49a8cf51-58e7-43c8-8466-14a66055c0ae",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Column_Clear",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "4b0aa2c51c1f4751b00216d15fae0593",
+      "Name": "Structural Column Types",
+      "Type": "selection",
+      "Type2": "dropdownSelection",
+      "Value": "C1",
+      "Description": "Select a structural column type in the active document",
+      "SelectedIndex": 2
+    }
+  ],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# ============================================================\r\n# S01 — GET STRUCTURAL COLUMNS BY SELECTED TYPE\r\n#       + DELETE ALL REBAR HOSTED BY MATCHING COLUMNS\r\n#\r\n# IN[0] = Structural Column Type\r\n#         from Dynamo native \"Structural Column Types\" node\r\n#\r\n# OUT:\r\n# [0] Matching Column Elements\r\n# [1] Column Element IDs\r\n# [2] Type Name\r\n# [3] Number of Columns Found\r\n# [4] Number of Rebars Deleted\r\n# [5] Deleted Rebar IDs\r\n# [6] Status\r\n# ============================================================\r\n\r\nimport clr\r\n\r\n\r\n# ------------------------------------------------------------\r\n# REVIT SERVICES\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ------------------------------------------------------------\r\n# REVIT API\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitAPI\")\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import Rebar\r\n\r\n\r\n# ------------------------------------------------------------\r\n# REVIT / DYNAMO\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\n\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\n\r\n# ------------------------------------------------------------\r\n# INPUT\r\n# ------------------------------------------------------------\r\n\r\ninput_type = IN[0]\r\n\r\n\r\n# ------------------------------------------------------------\r\n# SAFE ELEMENT ID VALUE\r\n#\r\n# Revit 2024+ = ElementId.Value\r\n# Older Revit = ElementId.IntegerValue\r\n# ------------------------------------------------------------\r\n\r\ndef id_value(element_id):\r\n\r\n    if element_id is None:\r\n        return None\r\n\r\n    try:\r\n        return int(element_id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element_id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\n# ------------------------------------------------------------\r\n# DEFAULT OUTPUT VALUES\r\n# ------------------------------------------------------------\r\n\r\nmatching_columns = []\r\nmatching_ids = []\r\n\r\ndeleted_rebar_ids = []\r\n\r\ntype_name = None\r\ncolumn_count = 0\r\ndeleted_count = 0\r\n\r\nstatus_messages = []\r\n\r\n\r\n# ------------------------------------------------------------\r\n# VALIDATE INPUT\r\n# ------------------------------------------------------------\r\n\r\nif input_type is None:\r\n\r\n    OUT = [\r\n        [],\r\n        [],\r\n        None,\r\n        0,\r\n        0,\r\n        [],\r\n        \"No Structural Column Type received.\"\r\n    ]\r\n\r\n\r\nelse:\r\n\r\n    # ========================================================\r\n    # 1. UNWRAP SELECTED COLUMN TYPE\r\n    # ========================================================\r\n\r\n    try:\r\n        selected_type = UnwrapElement(input_type)\r\n    except:\r\n        selected_type = input_type\r\n\r\n\r\n    # ========================================================\r\n    # 2. GET SELECTED TYPE ID\r\n    # ========================================================\r\n\r\n    selected_type_id = None\r\n    selected_type_id_value = None\r\n\r\n    try:\r\n\r\n        selected_type_id = selected_type.Id\r\n\r\n        selected_type_id_value = id_value(\r\n            selected_type_id\r\n        )\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n    # ========================================================\r\n    # 3. GET TYPE NAME\r\n    # ========================================================\r\n\r\n    try:\r\n        type_name = selected_type.Name\r\n    except:\r\n        pass\r\n\r\n\r\n    if not type_name:\r\n\r\n        try:\r\n\r\n            p = selected_type.get_Parameter(\r\n                BuiltInParameter.SYMBOL_NAME_PARAM\r\n            )\r\n\r\n            if p:\r\n                type_name = p.AsString()\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    if not type_name:\r\n        type_name = \"Unknown Type\"\r\n\r\n\r\n    # ========================================================\r\n    # 4. COLLECT STRUCTURAL COLUMN INSTANCES\r\n    # ========================================================\r\n\r\n    collector = (\r\n        FilteredElementCollector(doc)\r\n        .OfCategory(\r\n            BuiltInCategory.OST_StructuralColumns\r\n        )\r\n        .WhereElementIsNotElementType()\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # 5. FIND COLUMNS USING SELECTED TYPE\r\n    # ========================================================\r\n\r\n    for column in collector:\r\n\r\n        try:\r\n\r\n            column_type_id = column.GetTypeId()\r\n\r\n            column_type_value = id_value(\r\n                column_type_id\r\n            )\r\n\r\n            if column_type_value == selected_type_id_value:\r\n\r\n                matching_columns.append(column)\r\n\r\n                cid = id_value(column.Id)\r\n\r\n                if cid is not None:\r\n                    matching_ids.append(cid)\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    column_count = len(matching_columns)\r\n\r\n\r\n    # ========================================================\r\n    # 6. CREATE SET OF COLUMN IDs\r\n    #\r\n    # This makes host checking much faster.\r\n    # ========================================================\r\n\r\n    target_column_ids = set(matching_ids)\r\n\r\n\r\n    # ========================================================\r\n    # 7. COLLECT ALL REBAR IN PROJECT\r\n    # ========================================================\r\n\r\n    all_rebars = (\r\n        FilteredElementCollector(doc)\r\n        .OfClass(Rebar)\r\n        .WhereElementIsNotElementType()\r\n        .ToElements()\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # 8. FIND REBAR HOSTED BY TARGET COLUMNS\r\n    #\r\n    # IMPORTANT:\r\n    # Rebar.GetHostId() is used instead of dependent\r\n    # elements because hosted rebar is not reliably returned\r\n    # as a normal dependent element.\r\n    # ========================================================\r\n\r\n    rebars_to_delete = []\r\n\r\n    for rebar in all_rebars:\r\n\r\n        try:\r\n\r\n            host_id = rebar.GetHostId()\r\n\r\n            host_value = id_value(host_id)\r\n\r\n            if host_value in target_column_ids:\r\n\r\n                rebars_to_delete.append(rebar)\r\n\r\n                rid = id_value(rebar.Id)\r\n\r\n                if rid is not None:\r\n                    deleted_rebar_ids.append(rid)\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    # ========================================================\r\n    # 9. DELETE REBAR\r\n    # ========================================================\r\n\r\n    if len(rebars_to_delete) > 0:\r\n\r\n        transaction_started = False\r\n\r\n        try:\r\n\r\n            TransactionManager.Instance.EnsureInTransaction(doc)\r\n\r\n            transaction_started = True\r\n\r\n\r\n            for rebar in rebars_to_delete:\r\n\r\n                try:\r\n                    doc.Delete(rebar.Id)\r\n\r\n                except Exception as delete_error:\r\n\r\n                    status_messages.append(\r\n                        \"Failed to delete Rebar ID {}: {}\".format(\r\n                            id_value(rebar.Id),\r\n                            str(delete_error)\r\n                        )\r\n                    )\r\n\r\n\r\n            TransactionManager.Instance.TransactionTaskDone()\r\n\r\n            transaction_started = False\r\n\r\n\r\n        except Exception as transaction_error:\r\n\r\n            if transaction_started:\r\n\r\n                try:\r\n                    TransactionManager.Instance.ForceCloseTransaction()\r\n                except:\r\n                    pass\r\n\r\n            status_messages.append(\r\n                \"Delete transaction error: {}\".format(\r\n                    str(transaction_error)\r\n                )\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # 10. COUNT SUCCESSFULLY DELETED REBARS\r\n    #\r\n    # Verify that the elements no longer exist.\r\n    # ========================================================\r\n\r\n    successfully_deleted_ids = []\r\n\r\n    for rid in deleted_rebar_ids:\r\n\r\n        try:\r\n\r\n            element_id = ElementId(rid)\r\n\r\n            existing_element = doc.GetElement(element_id)\r\n\r\n            if existing_element is None:\r\n                successfully_deleted_ids.append(rid)\r\n\r\n        except:\r\n\r\n            # If Revit can no longer resolve the ID,\r\n            # treat it as successfully deleted.\r\n\r\n            successfully_deleted_ids.append(rid)\r\n\r\n\r\n    deleted_rebar_ids = successfully_deleted_ids\r\n\r\n    deleted_count = len(deleted_rebar_ids)\r\n\r\n\r\n    # ========================================================\r\n    # 11. STATUS\r\n    # ========================================================\r\n\r\n    if selected_type_id_value is None:\r\n\r\n        status = (\r\n            \"ERROR: Could not determine selected \"\r\n            \"Structural Column Type ID.\"\r\n        )\r\n\r\n\r\n    elif column_count == 0:\r\n\r\n        status = (\r\n            \"No structural columns found using type: {}\"\r\n            .format(type_name)\r\n        )\r\n\r\n\r\n    elif len(rebars_to_delete) == 0:\r\n\r\n        status = (\r\n            \"Found {} structural column(s) using type: {}. \"\r\n            \"No hosted Rebar elements were found.\"\r\n            .format(\r\n                column_count,\r\n                type_name\r\n            )\r\n        )\r\n\r\n\r\n    else:\r\n\r\n        status = (\r\n            \"Found {} structural column(s) using type: {}. \"\r\n            \"Found {} hosted rebar element(s). \"\r\n            \"Successfully deleted {} rebar element(s).\"\r\n            .format(\r\n                column_count,\r\n                type_name,\r\n                len(rebars_to_delete),\r\n                deleted_count\r\n            )\r\n        )\r\n\r\n\r\n    # Add errors if there were any\r\n\r\n    if len(status_messages) > 0:\r\n\r\n        status += \"\\n\\nWARNINGS:\\n\"\r\n\r\n        status += \"\\n\".join(\r\n            status_messages\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # 12. OUTPUT\r\n    # ========================================================\r\n\r\n    OUT = [\r\n        matching_columns,       # [0]\r\n        matching_ids,           # [1]\r\n        type_name,              # [2]\r\n        column_count,           # [3]\r\n        deleted_count,          # [4]\r\n        deleted_rebar_ids,      # [5]\r\n        status                  # [6]\r\n    ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "736027b70c3b4fc8a4c9f141b294941f",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "7d57856b0b074bdba77cf7e9faa71e28",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "984cd624ff814aeba960ff2af1a3efca",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 200.0,
+      "WatchHeight": 200.0,
+      "Id": "fb4b122c53924c58909c7876d4c9b077",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "3b02f2bb4f6d4838919a1290f2894e4b",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "4c16f9bcba2c458cade6bd502928bb32",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "DSRevitNodesUI.StructuralColumnTypes, DSRevitNodesUI",
+      "SelectedIndex": 2,
+      "SelectedString": "C1",
+      "Id": "4b0aa2c51c1f4751b00216d15fae0593",
+      "NodeType": "ExtensionNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "f7ecb109036c4b288951804465d41e0e",
+          "Name": "Column Types",
+          "Description": "The selected Column Types",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Select a structural column type in the active document"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "984cd624ff814aeba960ff2af1a3efca",
+      "End": "3b02f2bb4f6d4838919a1290f2894e4b",
+      "Id": "cc1ea16d70ad4f449ec6856f533dc8b6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f7ecb109036c4b288951804465d41e0e",
+      "End": "7d57856b0b074bdba77cf7e9faa71e28",
+      "Id": "434371068505404d8bc17207403d0482",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.6",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "9.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.6.0.9395",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "736027b70c3b4fc8a4c9f141b294941f",
+        "Name": "S01",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 384.91386686291196,
+        "Y": 162.39149808539105
+      },
+      {
+        "Id": "fb4b122c53924c58909c7876d4c9b077",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 598.8223359412532,
+        "Y": -170.13107979319588
+      },
+      {
+        "Id": "4b0aa2c51c1f4751b00216d15fae0593",
+        "Name": "Structural Column Types",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 47.23996492083981,
+        "Y": 163.83976293506288
+      }
+    ],
+    "Annotations": [],
+    "X": 414.6988959232709,
+    "Y": 293.99756569482713,
+    "Zoom": 0.8896169947491341
+  }
+}

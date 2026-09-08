@@ -1,0 +1,1231 @@
+{
+  "Uuid": "5c178b22-e1fb-45c3-ac4b-ec6caf41b32b",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Chatto's Auto Rebar",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "330f1cda21c54cbf96853db8f8010778",
+      "Name": "1-Select Column",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3e61",
+      "Description": "Select a model element from the document."
+    },
+    {
+      "Id": "1670b8033c334fe0a7ee26b4dc36258e",
+      "Name": "2-Number of Bars",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "10",
+      "MaximumValue": 16.0,
+      "MinimumValue": 4.0,
+      "StepValue": 2.0,
+      "NumberType": "Integer",
+      "Description": "Produces integer values"
+    },
+    {
+      "Id": "e50c059b8fbf41c6b6f3ddf81a667f6e",
+      "Name": "6 Middle Spacing",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "150",
+      "MaximumValue": 200.0,
+      "MinimumValue": 100.0,
+      "StepValue": 25.0,
+      "NumberType": "Integer",
+      "Description": "Produces integer values"
+    },
+    {
+      "Id": "a254146be1a34c3c9e53db68d24de4d9",
+      "Name": "4 Connected Beams",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "793cad2a-d0d6-44ae-a59b-dfbe2d50972a-00003d75,9cb49814-d929-4358-8870-5f5d1681bdbd-0005151d,9cb49814-d929-4358-8870-5f5d1681bdbd-000515af,b8b72a75-14f1-404e-920e-085cb0bdae04-00057410,be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3edc,be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3fa6,be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3fb2,be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b4000",
+      "Description": "Select multiple elements from the Revit document."
+    },
+    {
+      "Id": "64d4938283294422ac5d08452495e127",
+      "Name": "5 Confinement Spacing",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "100",
+      "MaximumValue": 125.0,
+      "MinimumValue": 75.0,
+      "StepValue": 25.0,
+      "NumberType": "Integer",
+      "Description": "Produces integer values"
+    },
+    {
+      "Id": "7a1dc9e0f5a54b29a5e10449bdf0635b",
+      "Name": "7 Concrete Cover",
+      "Type": "number",
+      "Type2": "number",
+      "Value": "40",
+      "MaximumValue": 75.0,
+      "MinimumValue": 25.0,
+      "StepValue": 5.0,
+      "NumberType": "Integer",
+      "Description": "Produces integer values"
+    },
+    {
+      "Id": "aa8343dd97bc42759dd621c32c74078e",
+      "Name": "3 Main Bar Diameter",
+      "Type": "selection",
+      "Type2": "dropdownSelection",
+      "Value": "16mm",
+      "Description": "A dropdown menu with customizable values.",
+      "SelectedIndex": 2
+    }
+  ],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Nodes.DSModelElementSelection, DSRevitNodesUI",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [
+        "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3e61"
+      ],
+      "Id": "330f1cda21c54cbf96853db8f8010778",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "f739cb9d7fce44bf84a6dd3edaf3e3d0",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Select a model element from the document."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\nfrom System.Collections.Generic import List\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n# INPUTS\r\ncolumn = UnwrapElement(IN[0])\r\nbar_type = UnwrapElement(IN[1])\r\nnumber_of_bars = int(IN[2])\r\n\r\ndef mm(value):\r\n    return UnitUtils.ConvertToInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\ndef intermediate_values(start, end, quantity):\r\n    \"\"\"Creates equally spaced coordinates excluding the corners.\"\"\"\r\n    values = []\r\n\r\n    if quantity <= 0:\r\n        return values\r\n\r\n    spacing = (end - start) / float(quantity + 1)\r\n\r\n    for i in range(1, quantity + 1):\r\n        values.append(start + spacing * i)\r\n\r\n    return values\r\n\r\ncover = mm(40)\r\n\r\nif column is None:\r\n    OUT = \"ERROR: Select one structural column.\"\r\n\r\nelif bar_type is None:\r\n    OUT = \"ERROR: Select one RebarBarType.\"\r\n\r\nelif not isinstance(bar_type, RebarBarType):\r\n    OUT = \"ERROR: IN[1] is not a valid RebarBarType.\"\r\n\r\nelif number_of_bars < 4:\r\n    OUT = \"ERROR: Minimum quantity is 4 bars.\"\r\n\r\nelif number_of_bars % 2 != 0:\r\n    OUT = \"ERROR: Use an even quantity: 4, 6, 8, 10, 12...\"\r\n\r\nelse:\r\n    box = column.get_BoundingBox(None)\r\n\r\n    if box is None:\r\n        OUT = \"ERROR: Could not obtain the column bounding box.\"\r\n\r\n    else:\r\n        bar_diameter = bar_type.BarNominalDiameter\r\n        offset = cover + bar_diameter / 2.0\r\n\r\n        x1 = box.Min.X + offset\r\n        x2 = box.Max.X - offset\r\n        y1 = box.Min.Y + offset\r\n        y2 = box.Max.Y - offset\r\n\r\n        z1 = box.Min.Z + offset\r\n        z2 = box.Max.Z - offset\r\n\r\n        usable_width = x2 - x1\r\n        usable_depth = y2 - y1\r\n\r\n        if usable_width <= 0 or usable_depth <= 0:\r\n            OUT = \"ERROR: Cover and bar diameter are too large for the column.\"\r\n\r\n        else:\r\n            # Four corner bars are always provided.\r\n            # Remaining bars are added symmetrically to opposite faces.\r\n            remaining_pairs = (number_of_bars - 4) // 2\r\n\r\n            if remaining_pairs == 0:\r\n                x_face_bars = 0\r\n                y_face_bars = 0\r\n\r\n            else:\r\n                # Allocate more bars to the longer faces.\r\n                x_face_bars = int(round(\r\n                    remaining_pairs *\r\n                    usable_width /\r\n                    (usable_width + usable_depth)\r\n                ))\r\n\r\n                # From 8 bars upward, place at least one\r\n                # intermediate bar on every face.\r\n                if remaining_pairs >= 2:\r\n                    x_face_bars = max(\r\n                        1,\r\n                        min(remaining_pairs - 1, x_face_bars)\r\n                    )\r\n\r\n                y_face_bars = remaining_pairs - x_face_bars\r\n\r\n            bar_locations = [\r\n                # Four corner bars\r\n                (x1, y1),\r\n                (x2, y1),\r\n                (x2, y2),\r\n                (x1, y2)\r\n            ]\r\n\r\n            # Intermediate bars on bottom and top faces\r\n            for x in intermediate_values(x1, x2, x_face_bars):\r\n                bar_locations.append((x, y1))\r\n                bar_locations.append((x, y2))\r\n\r\n            # Intermediate bars on left and right faces\r\n            for y in intermediate_values(y1, y2, y_face_bars):\r\n                bar_locations.append((x1, y))\r\n                bar_locations.append((x2, y))\r\n\r\n            # Find all existing rebars hosted by this column\r\n            existing_rebars = []\r\n\r\n            all_rebars = (\r\n                FilteredElementCollector(doc)\r\n                .OfClass(Rebar)\r\n                .WhereElementIsNotElementType()\r\n                .ToElements()\r\n            )\r\n\r\n            for existing_rebar in all_rebars:\r\n                try:\r\n                    if existing_rebar.GetHostId() == column.Id:\r\n                        existing_rebars.append(existing_rebar)\r\n                except:\r\n                    pass\r\n\r\n            deleted_count = len(existing_rebars)\r\n            created_bars = []\r\n\r\n            TransactionManager.Instance.EnsureInTransaction(doc)\r\n\r\n            sub_transaction = SubTransaction(doc)\r\n            sub_transaction.Start()\r\n\r\n            try:\r\n                # Delete existing rebars in the selected column\r\n                for existing_rebar in existing_rebars:\r\n                    doc.Delete(existing_rebar.Id)\r\n\r\n                # Create the new main bars\r\n                for x, y in bar_locations:\r\n                    bar_line = Line.CreateBound(\r\n                        XYZ(x, y, z1),\r\n                        XYZ(x, y, z2)\r\n                    )\r\n\r\n                    curves = List[Curve]()\r\n                    curves.Add(bar_line)\r\n\r\n                    new_rebar = Rebar.CreateFromCurves(\r\n                        doc,\r\n                        RebarStyle.Standard,\r\n                        bar_type,\r\n                        None,\r\n                        None,\r\n                        column,\r\n                        XYZ.BasisX,\r\n                        curves,\r\n                        RebarHookOrientation.Left,\r\n                        RebarHookOrientation.Right,\r\n                        True,\r\n                        True\r\n                    )\r\n\r\n                    created_bars.append(new_rebar)\r\n\r\n                sub_transaction.Commit()\r\n                TransactionManager.Instance.TransactionTaskDone()\r\n\r\n                diameter_mm = UnitUtils.ConvertFromInternalUnits(\r\n                    bar_diameter,\r\n                    UnitTypeId.Millimeters\r\n                )\r\n\r\n                OUT = [\r\n                    \"SUCCESS: Main bars updated.\",\r\n                    \"Existing rebars deleted: {}\".format(deleted_count),\r\n                    \"Main bars created: {}\".format(len(created_bars)),\r\n                    \"Bar diameter: {:.0f} mm\".format(diameter_mm),\r\n                    \"Intermediate bars on top/bottom: {}\".format(\r\n                        x_face_bars\r\n                    ),\r\n                    \"Intermediate bars on left/right: {}\".format(\r\n                        y_face_bars\r\n                    ),\r\n                    created_bars\r\n                ]\r\n\r\n            except Exception as error:\r\n                sub_transaction.RollBack()\r\n                TransactionManager.Instance.TransactionTaskDone()\r\n\r\n                OUT = [\r\n                    \"ERROR: No changes were retained.\",\r\n                    str(error)\r\n                ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "3a4281cec8e24b6db6513b2a97d2b58c",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "9c71a6344d084ff6885b44efd191dbb1",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "df47822a3ec14dbb817082d71fa63719",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "7d5f02a3a5544027bb015cbf334eddae",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "651788ab4db2462d88247f02cc8edf07",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom Autodesk.Revit.DB import (\r\n    FilteredElementCollector,\r\n    Element,\r\n    BuiltInParameter\r\n)\r\nfrom Autodesk.Revit.DB.Structure import RebarBarType\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\nbar_types = list(\r\n    FilteredElementCollector(doc)\r\n    .OfClass(RebarBarType)\r\n    .ToElements()\r\n)\r\n\r\ndef get_name(bar_type):\r\n    try:\r\n        return Element.Name.GetValue(bar_type)\r\n    except:\r\n        parameter = bar_type.get_Parameter(\r\n            BuiltInParameter.SYMBOL_NAME_PARAM\r\n        )\r\n        return parameter.AsString() if parameter else \"Unnamed\"\r\n\r\nbar_types.sort(key=get_name)\r\n\r\nnames = [get_name(bar_type) for bar_type in bar_types]\r\n\r\n# First output: elements used by the main script\r\n# Second output: readable names for the Watch node\r\nOUT = bar_types, names",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "b11cb766bae54e04a8a621a126daacfc",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "38a39d44a10744e0b6976730027e5057",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "b10ab2132bb74a388160f24f0c3f1188",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 253.0,
+      "WatchHeight": 343.0,
+      "Id": "e15749503d0242a8b4e039b37e269534",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "33af99ad5762484faa4ad435d79afa7a",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f008583592914b50babcb5cd3eb47237",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "6f7c6cb11035439eb5d7552e9bded50e",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fcc50fc5b3e744ceaba5d3d00271a92f",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 0
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "Id": "2c4eeed6baa54cc59fceb81eec218687",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "a031bd2fac2c400e99b650b5db672ba6",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "9f0fbff42131465699d443a8d2dd2596",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "12697342c36a4da4af90ad45dac021e7",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 95.0,
+      "WatchHeight": 200.0,
+      "Id": "5b2d5e786089479f8aa9f4551489f419",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "361284a3fdb443e5be873e235b685288",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "79027e9b78b94ac79cf3825a79279dd5",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 11,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "acd2eb0e08444652adf0173dc058d041",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "e25505e214e945488e2360af192faec6",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 2
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "Id": "76d379b88eb247aba60890c511067e91",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "e57f0da8e91b4f08b6b02a105fe47b1b",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0ff4b181b59940569bd0b9e1d61fc22b",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ebff514f814d4b7ab9feb1960df7d009",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 50.0,
+      "WatchHeight": 142.0,
+      "Id": "eb20274a3b5249bf8eacb3febd4a44ac",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "73555b57001d4edd9ea364fb72c94e30",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "df1aecefcd0b4faba1ac38d90244c44a",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 252.0,
+      "WatchHeight": 200.0,
+      "Id": "ed7f46b989254cd9b4dd8418d7251ed3",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "0ded32573b1f47738b3de72b1653d4e8",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "770a717173df4538aa12391abd304ce8",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 16,
+      "MinimumValue": 4,
+      "StepValue": 2,
+      "Id": "1670b8033c334fe0a7ee26b4dc36258e",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "c7bde84f473241a1b2111f5175a34dd0",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 10
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 11,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "5b7e6e073304457d94f490dcfaee0965",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4dacf6b9417c4707b2b50d7e16e7b513",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 0
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "Id": "efe4d6a4e91d49bfaf44e67f743855c6",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "34791133d660427ba68fcb46e23bb001",
+          "Name": "list",
+          "Description": "List to fetch an item from.\n\nvar[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a3bbebb9cc494801a4ed9ca0ab850428",
+          "Name": "index",
+          "Description": "Index of the item to be fetched.\n\nint",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "99961961c03642968696aab19b70cd63",
+          "Name": "item",
+          "Description": "Item in the list at the given index.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "FunctionSignature": "DSCore.List.GetItemAtIndex@var[]..[],int",
+      "Replication": "Auto",
+      "Description": "Returns an item from the given list that's located at the specified index.\n\nList.GetItemAtIndex (list: var[]..[], index: int): var[]..[]"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 50.0,
+      "WatchHeight": 166.0,
+      "Id": "e64ce3c4fad7466996490acc91c2a709",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "7186174c1604467bb4070b4a06a9a381",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6ffc51103036464ba7c49b21f9dba581",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\nfrom System.Collections.Generic import List\r\n\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# DYNAMO INPUTS\r\n# ============================================================\r\n# IN[0] = Continuous structural column - Select Model Element\r\n# IN[1] = Connected beams - Select Model Elements\r\n# IN[2] = Stirrup/tie RebarBarType\r\n# IN[3] = Confinement spacing in millimetres\r\n# IN[4] = Middle-zone spacing in millimetres\r\n# IN[5] = Concrete cover in millimetres\r\n# IN[6] = Main-bar Python node OUT (execution-order trigger)\r\n\r\ncolumn = UnwrapElement(IN[0])\r\nraw_beams = UnwrapElement(IN[1])\r\ntie_type = UnwrapElement(IN[2])\r\n\r\n# This input deliberately creates a Dynamo dependency. Connect the OUT port\r\n# of the main-bar Python node to IN[6] of this tie node. Dynamo will then\r\n# finish the main-bar node before this script deletes and recreates the ties.\r\n# The value itself is not used for reinforcement geometry.\r\nmain_bar_completion = IN[6]\r\n\r\n\r\ntry:\r\n    confinement_spacing_mm = float(IN[3])\r\nexcept:\r\n    confinement_spacing_mm = 0.0\r\n\r\ntry:\r\n    middle_spacing_mm = float(IN[4])\r\nexcept:\r\n    middle_spacing_mm = 0.0\r\n\r\ntry:\r\n    cover_mm = float(IN[5])\r\nexcept:\r\n    cover_mm = -1.0\r\n\r\n\r\n# Fixed project rule:\r\n# confinement zone = Lclear / 4 at each end of every clear segment.\r\nCONFINEMENT_RATIO = 0.25\r\n\r\n\r\n# ============================================================\r\n# UNIT AND GENERAL HELPERS\r\n# ============================================================\r\n\r\ndef mm(value):\r\n    \"\"\"Convert millimetres to Revit internal units.\"\"\"\r\n    return UnitUtils.ConvertToInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef to_mm(value):\r\n    \"\"\"Convert Revit internal units to millimetres.\"\"\"\r\n    return UnitUtils.ConvertFromInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef element_name(element):\r\n    \"\"\"Return a readable Revit element name.\"\"\"\r\n    try:\r\n        return Element.Name.GetValue(element)\r\n    except:\r\n        try:\r\n            return element.Name\r\n        except:\r\n            return \"Unnamed\"\r\n\r\n\r\ndef element_id_value(element):\r\n    \"\"\"Return an ElementId value in Revit 2026, with an older fallback.\"\"\"\r\n    try:\r\n        return int(element.Id.Value)\r\n    except:\r\n        try:\r\n            return int(element.Id.IntegerValue)\r\n        except:\r\n            return str(element.Id)\r\n\r\n\r\ndef make_element_list(value):\r\n    \"\"\"Normalize a Dynamo element input into a Python list.\"\"\"\r\n    if value is None:\r\n        return []\r\n\r\n    if isinstance(value, list):\r\n        return value\r\n\r\n    try:\r\n        return list(value)\r\n    except:\r\n        return [value]\r\n\r\n\r\n# ============================================================\r\n# FIND A 135-DEGREE STIRRUP/TIE HOOK\r\n# ============================================================\r\n\r\ndef find_135_seismic_hook():\r\n    \"\"\"Find a loaded 135-degree Stirrup/Tie hook.\"\"\"\r\n    target_angle = math.radians(135.0)\r\n    angle_tolerance = math.radians(0.1)\r\n    candidates = []\r\n\r\n    hook_types = (\r\n        FilteredElementCollector(doc)\r\n        .OfClass(RebarHookType)\r\n        .WhereElementIsElementType()\r\n        .ToElements()\r\n    )\r\n\r\n    for hook in hook_types:\r\n        try:\r\n            correct_angle = (\r\n                abs(hook.HookAngle - target_angle)\r\n                <= angle_tolerance\r\n            )\r\n            correct_style = (\r\n                hook.Style == RebarStyle.StirrupTie\r\n            )\r\n\r\n            if correct_angle and correct_style:\r\n                candidates.append(hook)\r\n        except:\r\n            pass\r\n\r\n    if not candidates:\r\n        return None\r\n\r\n    candidates.sort(\r\n        key=lambda hook: (\r\n            0 if \"seismic\" in element_name(hook).lower() else 1,\r\n            element_name(hook).lower()\r\n        )\r\n    )\r\n\r\n    return candidates[0]\r\n\r\n\r\n# ============================================================\r\n# BEAM-JOINT DETECTION HELPERS\r\n# ============================================================\r\n\r\ndef boxes_touch_in_xy(column_box, beam_box, tolerance):\r\n    \"\"\"Check whether a beam bounding box reaches the column in plan.\"\"\"\r\n    overlap_x = not (\r\n        beam_box.Max.X < column_box.Min.X - tolerance\r\n        or beam_box.Min.X > column_box.Max.X + tolerance\r\n    )\r\n\r\n    overlap_y = not (\r\n        beam_box.Max.Y < column_box.Min.Y - tolerance\r\n        or beam_box.Min.Y > column_box.Max.Y + tolerance\r\n    )\r\n\r\n    return overlap_x and overlap_y\r\n\r\n\r\ndef merge_joint_ranges(ranges, tolerance):\r\n    \"\"\"\r\n    Merge overlapping beam elevation ranges at each floor.\r\n\r\n    The merged range is used only as an exclusion zone. No ties are\r\n    created within it or directly on either joint face.\r\n    \"\"\"\r\n    if not ranges:\r\n        return []\r\n\r\n    ordered_ranges = sorted(\r\n        ranges,\r\n        key=lambda item: item[\"start\"]\r\n    )\r\n\r\n    merged = []\r\n\r\n    for current in ordered_ranges:\r\n        if not merged:\r\n            merged.append({\r\n                \"start\": current[\"start\"],\r\n                \"end\": current[\"end\"],\r\n                \"beam_ids\": list(current[\"beam_ids\"])\r\n            })\r\n            continue\r\n\r\n        previous = merged[-1]\r\n        ranges_overlap = (\r\n            current[\"start\"] <= previous[\"end\"] + tolerance\r\n        )\r\n\r\n        if ranges_overlap:\r\n            previous[\"start\"] = min(\r\n                previous[\"start\"],\r\n                current[\"start\"]\r\n            )\r\n            previous[\"end\"] = max(\r\n                previous[\"end\"],\r\n                current[\"end\"]\r\n            )\r\n            previous[\"beam_ids\"].extend(\r\n                current[\"beam_ids\"]\r\n            )\r\n        else:\r\n            merged.append({\r\n                \"start\": current[\"start\"],\r\n                \"end\": current[\"end\"],\r\n                \"beam_ids\": list(current[\"beam_ids\"])\r\n            })\r\n\r\n    return merged\r\n\r\n\r\n# ============================================================\r\n# TIE-ZONE HELPERS\r\n# ============================================================\r\n\r\ndef estimate_tie_quantity(\r\n    zone_length,\r\n    spacing,\r\n    include_first,\r\n    include_last\r\n):\r\n    \"\"\"Estimate the number of visible tie positions in one set.\"\"\"\r\n    if zone_length <= 0 or spacing <= 0:\r\n        return 0\r\n\r\n    quantity = int(math.ceil(zone_length / spacing)) + 1\r\n\r\n    if not include_first:\r\n        quantity -= 1\r\n\r\n    if not include_last:\r\n        quantity -= 1\r\n\r\n    return max(quantity, 0)\r\n\r\n\r\ndef add_zone(\r\n    zones,\r\n    name,\r\n    start_z,\r\n    end_z,\r\n    spacing,\r\n    include_first,\r\n    include_last,\r\n    zone_type\r\n):\r\n    \"\"\"Add one valid clear-column tie-distribution zone.\"\"\"\r\n    zone_length = end_z - start_z\r\n    tolerance = mm(1.0)\r\n\r\n    if zone_length <= tolerance:\r\n        return\r\n\r\n    estimated_quantity = estimate_tie_quantity(\r\n        zone_length,\r\n        spacing,\r\n        include_first,\r\n        include_last\r\n    )\r\n\r\n    if estimated_quantity <= 0:\r\n        return\r\n\r\n    zones.append({\r\n        \"name\": name,\r\n        \"type\": zone_type,\r\n        \"start\": start_z,\r\n        \"end\": end_z,\r\n        \"spacing\": spacing,\r\n        \"include_first\": include_first,\r\n        \"include_last\": include_last,\r\n        \"estimated_quantity\": estimated_quantity\r\n    })\r\n\r\n\r\ndef add_clear_segment_zones(\r\n    zones,\r\n    segment_number,\r\n    start_z,\r\n    end_z,\r\n    include_segment_start,\r\n    include_segment_end,\r\n    confinement_spacing,\r\n    middle_spacing\r\n):\r\n    \"\"\"\r\n    Divide one clear column segment into three zones:\r\n\r\n    bottom confinement = Lclear / 4\r\n    middle zone         = Lclear / 2\r\n    top confinement    = Lclear / 4\r\n\r\n    For a segment next to a beam joint, its joint-side endpoint is\r\n    excluded so no tie is placed directly on the joint face.\r\n    \"\"\"\r\n    clear_length = end_z - start_z\r\n\r\n    if clear_length <= mm(1.0):\r\n        return\r\n\r\n    confinement_length = clear_length * CONFINEMENT_RATIO\r\n    bottom_end = start_z + confinement_length\r\n    top_start = end_z - confinement_length\r\n\r\n    add_zone(\r\n        zones,\r\n        \"Segment {} - Bottom L/4 confinement\".format(\r\n            segment_number\r\n        ),\r\n        start_z,\r\n        bottom_end,\r\n        confinement_spacing,\r\n        include_segment_start,\r\n        True,\r\n        \"Confinement\"\r\n    )\r\n\r\n    add_zone(\r\n        zones,\r\n        \"Segment {} - Middle zone\".format(segment_number),\r\n        bottom_end,\r\n        top_start,\r\n        middle_spacing,\r\n        False,\r\n        False,\r\n        \"Middle\"\r\n    )\r\n\r\n    add_zone(\r\n        zones,\r\n        \"Segment {} - Top L/4 confinement\".format(\r\n            segment_number\r\n        ),\r\n        top_start,\r\n        end_z,\r\n        confinement_spacing,\r\n        True,\r\n        include_segment_end,\r\n        \"Confinement\"\r\n    )\r\n\r\n\r\n# ============================================================\r\n# CREATE ONE SHAPE-DRIVEN TIE SET\r\n# ============================================================\r\n\r\ndef create_tie_set(\r\n    host_column,\r\n    tie_bar_type,\r\n    hook_type,\r\n    x1,\r\n    x2,\r\n    y1,\r\n    y2,\r\n    zone\r\n):\r\n    \"\"\"Create one rectangular shape-driven tie set.\"\"\"\r\n    z_start = zone[\"start\"]\r\n    z_end = zone[\"end\"]\r\n    distribution_length = z_end - z_start\r\n\r\n    p1 = XYZ(x1, y1, z_start)\r\n    p2 = XYZ(x2, y1, z_start)\r\n    p3 = XYZ(x2, y2, z_start)\r\n    p4 = XYZ(x1, y2, z_start)\r\n\r\n    # Confirmed working counterclockwise curve order.\r\n    curves = List[Curve]()\r\n    curves.Add(Line.CreateBound(p1, p2))\r\n    curves.Add(Line.CreateBound(p2, p3))\r\n    curves.Add(Line.CreateBound(p3, p4))\r\n    curves.Add(Line.CreateBound(p4, p1))\r\n\r\n    # Revit 2026 hook termination settings.\r\n    terminations = BarTerminationsData(doc)\r\n    terminations.HookTypeIdAtStart = hook_type.Id\r\n    terminations.HookTypeIdAtEnd = hook_type.Id\r\n\r\n    # Confirmed working hook orientation.\r\n    terminations.TerminationOrientationAtStart = (\r\n        RebarHookOrientation.Left\r\n    )\r\n    terminations.TerminationOrientationAtEnd = (\r\n        RebarHookOrientation.Left\r\n    )\r\n\r\n    new_tie = Rebar.CreateFromCurves(\r\n        doc,\r\n        RebarStyle.StirrupTie,\r\n        tie_bar_type,\r\n        host_column,\r\n        XYZ.BasisZ,\r\n        curves,\r\n        terminations,\r\n        True,\r\n        True\r\n    )\r\n\r\n    if new_tie is None:\r\n        raise Exception(\r\n            \"Revit could not create tie zone: {}\".format(\r\n                zone[\"name\"]\r\n            )\r\n        )\r\n\r\n    accessor = new_tie.GetShapeDrivenAccessor()\r\n    accessor.SetLayoutAsMaximumSpacing(\r\n        zone[\"spacing\"],\r\n        distribution_length,\r\n        True,\r\n        zone[\"include_first\"],\r\n        zone[\"include_last\"]\r\n    )\r\n\r\n    return new_tie\r\n\r\n\r\n# ============================================================\r\n# NORMALIZE BEAM INPUT\r\n# ============================================================\r\n\r\nbeams = make_element_list(raw_beams)\r\nbeams = [beam for beam in beams if beam is not None]\r\n\r\n\r\n# ============================================================\r\n# INPUT VALIDATION\r\n# ============================================================\r\n\r\nerror_message = None\r\n\r\nif column is None:\r\n    error_message = (\r\n        \"ERROR: Select one continuous structural column.\"\r\n    )\r\nelif tie_type is None:\r\n    error_message = (\r\n        \"ERROR: Select one stirrup RebarBarType.\"\r\n    )\r\nelif not isinstance(tie_type, RebarBarType):\r\n    error_message = (\r\n        \"ERROR: IN[2] must be a RebarBarType.\"\r\n    )\r\nelif not beams:\r\n    error_message = (\r\n        \"ERROR: Select all beams connected to the column using \"\r\n        \"Select Model Elements.\"\r\n    )\r\nelif confinement_spacing_mm <= 0:\r\n    error_message = (\r\n        \"ERROR: Confinement spacing must be greater than zero.\"\r\n    )\r\nelif middle_spacing_mm <= 0:\r\n    error_message = (\r\n        \"ERROR: Middle-zone spacing must be greater than zero.\"\r\n    )\r\nelif cover_mm < 0:\r\n    error_message = (\r\n        \"ERROR: Concrete cover cannot be negative.\"\r\n    )\r\n\r\n\r\n# ============================================================\r\n# MAIN PROCESS\r\n# ============================================================\r\n\r\nif error_message is not None:\r\n    OUT = error_message\r\n\r\nelse:\r\n    seismic_hook = find_135_seismic_hook()\r\n\r\n    if seismic_hook is None:\r\n        OUT = [\r\n            \"ERROR: No compatible 135-degree hook was found.\",\r\n            \"Load or create a 135-degree Stirrup/Tie hook.\"\r\n        ]\r\n\r\n    else:\r\n        column_box = column.get_BoundingBox(None)\r\n\r\n        if column_box is None:\r\n            OUT = (\r\n                \"ERROR: Could not obtain the column bounding box.\"\r\n            )\r\n\r\n        else:\r\n            tie_diameter = tie_type.BarNominalDiameter\r\n            cover = mm(cover_mm)\r\n            confinement_spacing = mm(confinement_spacing_mm)\r\n            middle_spacing = mm(middle_spacing_mm)\r\n\r\n            # Tie centreline is cover plus half the tie diameter.\r\n            offset = cover + tie_diameter / 2.0\r\n\r\n            x1 = column_box.Min.X + offset\r\n            x2 = column_box.Max.X - offset\r\n            y1 = column_box.Min.Y + offset\r\n            y2 = column_box.Max.Y - offset\r\n\r\n            column_z_start = column_box.Min.Z + offset\r\n            column_z_end = column_box.Max.Z - offset\r\n\r\n            if x2 <= x1 or y2 <= y1:\r\n                OUT = (\r\n                    \"ERROR: Cover and tie diameter are too large \"\r\n                    \"for the column section.\"\r\n                )\r\n\r\n            elif column_z_end <= column_z_start:\r\n                OUT = (\r\n                    \"ERROR: Available tie distribution height \"\r\n                    \"is invalid.\"\r\n                )\r\n\r\n            else:\r\n                # -----------------------------------------------\r\n                # DETECT SELECTED BEAM-JOINT EXCLUSION RANGES\r\n                # -----------------------------------------------\r\n\r\n                beam_ranges = []\r\n                ignored_beams = []\r\n                xy_tolerance = mm(25.0)\r\n\r\n                for beam in beams:\r\n                    beam_box = beam.get_BoundingBox(None)\r\n\r\n                    if beam_box is None:\r\n                        ignored_beams.append(\r\n                            \"{} | ID {} | no bounding box\".format(\r\n                                element_name(beam),\r\n                                element_id_value(beam)\r\n                            )\r\n                        )\r\n                        continue\r\n\r\n                    touches_column = boxes_touch_in_xy(\r\n                        column_box,\r\n                        beam_box,\r\n                        xy_tolerance\r\n                    )\r\n\r\n                    overlaps_column_height = not (\r\n                        beam_box.Max.Z < column_z_start\r\n                        or beam_box.Min.Z > column_z_end\r\n                    )\r\n\r\n                    if not touches_column or not overlaps_column_height:\r\n                        ignored_beams.append(\r\n                            \"{} | ID {} | does not reach column\".format(\r\n                                element_name(beam),\r\n                                element_id_value(beam)\r\n                            )\r\n                        )\r\n                        continue\r\n\r\n                    joint_start = max(\r\n                        beam_box.Min.Z,\r\n                        column_z_start\r\n                    )\r\n                    joint_end = min(\r\n                        beam_box.Max.Z,\r\n                        column_z_end\r\n                    )\r\n\r\n                    if joint_end > joint_start:\r\n                        beam_ranges.append({\r\n                            \"start\": joint_start,\r\n                            \"end\": joint_end,\r\n                            \"beam_ids\": [element_id_value(beam)]\r\n                        })\r\n\r\n                joint_ranges = merge_joint_ranges(\r\n                    beam_ranges,\r\n                    mm(10.0)\r\n                )\r\n\r\n                if not joint_ranges:\r\n                    OUT = [\r\n                        \"ERROR: None of the selected beams were \"\r\n                        \"recognized as connected to the column.\",\r\n                        \"Check the selected column and beams.\",\r\n                        ignored_beams\r\n                    ]\r\n\r\n                else:\r\n                    # --------------------------------------------\r\n                    # BUILD CLEAR-COLUMN TIE ZONES ONLY\r\n                    # --------------------------------------------\r\n                    # The entire merged depth of every detected beam\r\n                    # joint is skipped. No joint tie set is created.\r\n                    # No tie is placed at the bottom or top joint face.\r\n\r\n                    zones = []\r\n                    cursor = column_z_start\r\n                    segment_number = 1\r\n\r\n                    for joint in joint_ranges:\r\n                        clear_end = joint[\"start\"]\r\n\r\n                        if clear_end > cursor + mm(1.0):\r\n                            include_segment_start = (\r\n                                abs(cursor - column_z_start)\r\n                                <= mm(1.0)\r\n                            )\r\n\r\n                            add_clear_segment_zones(\r\n                                zones,\r\n                                segment_number,\r\n                                cursor,\r\n                                clear_end,\r\n                                include_segment_start,\r\n                                False,\r\n                                confinement_spacing,\r\n                                middle_spacing\r\n                            )\r\n\r\n                            segment_number += 1\r\n\r\n                        # Jump to the top of the joint, leaving its\r\n                        # entire depth free of generated column ties.\r\n                        cursor = max(cursor, joint[\"end\"])\r\n\r\n                    # Create zones in the clear column portion above\r\n                    # the highest detected joint, if one exists.\r\n                    if column_z_end > cursor + mm(1.0):\r\n                        add_clear_segment_zones(\r\n                            zones,\r\n                            segment_number,\r\n                            cursor,\r\n                            column_z_end,\r\n                            False,\r\n                            True,\r\n                            confinement_spacing,\r\n                            middle_spacing\r\n                        )\r\n\r\n                    zones.sort(\r\n                        key=lambda zone: (\r\n                            zone[\"start\"],\r\n                            zone[\"end\"]\r\n                        )\r\n                    )\r\n\r\n                    if not zones:\r\n                        OUT = (\r\n                            \"ERROR: No valid clear-column tie zones \"\r\n                            \"were generated.\"\r\n                        )\r\n\r\n                    else:\r\n                        # ----------------------------------------\r\n                        # FIND EXISTING TIES ON SELECTED COLUMN\r\n                        # ----------------------------------------\r\n\r\n                        existing_ties = []\r\n\r\n                        all_rebars = (\r\n                            FilteredElementCollector(doc)\r\n                            .OfClass(Rebar)\r\n                            .WhereElementIsNotElementType()\r\n                            .ToElements()\r\n                        )\r\n\r\n                        for existing_rebar in all_rebars:\r\n                            try:\r\n                                same_host = (\r\n                                    existing_rebar.GetHostId()\r\n                                    == column.Id\r\n                                )\r\n                                is_tie = (\r\n                                    existing_rebar.Style\r\n                                    == RebarStyle.StirrupTie\r\n                                )\r\n\r\n                                if same_host and is_tie:\r\n                                    existing_ties.append(\r\n                                        existing_rebar\r\n                                    )\r\n                            except:\r\n                                pass\r\n\r\n                        deleted_count = len(existing_ties)\r\n                        created_sets = []\r\n                        joint_report = []\r\n                        zone_report = []\r\n\r\n                        for index, joint in enumerate(joint_ranges):\r\n                            joint_report.append(\r\n                                \"Excluded joint {} | {:.0f} to \"\r\n                                \"{:.0f} mm | Beam IDs: {}\".format(\r\n                                    index + 1,\r\n                                    to_mm(joint[\"start\"]),\r\n                                    to_mm(joint[\"end\"]),\r\n                                    joint[\"beam_ids\"]\r\n                                )\r\n                            )\r\n\r\n                        # ----------------------------------------\r\n                        # TRANSACTION\r\n                        # ----------------------------------------\r\n\r\n                        TransactionManager.Instance.EnsureInTransaction(\r\n                            doc\r\n                        )\r\n\r\n                        sub_transaction = SubTransaction(doc)\r\n                        sub_transaction.Start()\r\n\r\n                        try:\r\n                            # Delete only existing stirrup/tie rebars\r\n                            # hosted by the selected column. Main bars\r\n                            # are retained.\r\n                            for existing_tie in existing_ties:\r\n                                doc.Delete(existing_tie.Id)\r\n\r\n                            for zone in zones:\r\n                                new_tie = create_tie_set(\r\n                                    column,\r\n                                    tie_type,\r\n                                    seismic_hook,\r\n                                    x1,\r\n                                    x2,\r\n                                    y1,\r\n                                    y2,\r\n                                    zone\r\n                                )\r\n\r\n                                created_sets.append(new_tie)\r\n\r\n                                zone_report.append(\r\n                                    \"{} | {} | {:.0f} to {:.0f} mm | \"\r\n                                    \"length {:.0f} mm | maximum spacing \"\r\n                                    \"{:.0f} mm | estimated ties {}\".format(\r\n                                        zone[\"name\"],\r\n                                        zone[\"type\"],\r\n                                        to_mm(zone[\"start\"]),\r\n                                        to_mm(zone[\"end\"]),\r\n                                        to_mm(\r\n                                            zone[\"end\"] - zone[\"start\"]\r\n                                        ),\r\n                                        to_mm(zone[\"spacing\"]),\r\n                                        zone[\"estimated_quantity\"]\r\n                                    )\r\n                                )\r\n\r\n                            sub_transaction.Commit()\r\n                            TransactionManager.Instance.TransactionTaskDone()\r\n\r\n                            OUT = [\r\n                                \"SUCCESS: Clear-column tie zones created.\",\r\n                                \"Execution order: main bars completed before ties.\",\r\n                                \"Column ID: {}\".format(\r\n                                    element_id_value(column)\r\n                                ),\r\n                                \"Existing tie sets deleted: {}\".format(\r\n                                    deleted_count\r\n                                ),\r\n                                \"New tie sets created: {}\".format(\r\n                                    len(created_sets)\r\n                                ),\r\n                                \"Beam joints excluded: {}\".format(\r\n                                    len(joint_ranges)\r\n                                ),\r\n                                \"Beam-joint regions contain no generated ties.\",\r\n                                \"No generated tie is placed at a joint face.\",\r\n                                \"Confinement length rule: Lclear / 4\",\r\n                                \"Middle-zone length: Lclear / 2\",\r\n                                \"Confinement spacing: {:.0f} mm\".format(\r\n                                    confinement_spacing_mm\r\n                                ),\r\n                                \"Middle spacing: {:.0f} mm\".format(\r\n                                    middle_spacing_mm\r\n                                ),\r\n                                \"Hook type: {}\".format(\r\n                                    element_name(seismic_hook)\r\n                                ),\r\n                                \"Excluded beam-joint report:\",\r\n                                joint_report,\r\n                                \"Ignored beam selections:\",\r\n                                ignored_beams,\r\n                                \"Tie-zone report:\",\r\n                                zone_report,\r\n                                created_sets\r\n                            ]\r\n\r\n                        except Exception as error:\r\n                            sub_transaction.RollBack()\r\n                            TransactionManager.Instance.TransactionTaskDone()\r\n\r\n                            OUT = [\r\n                                \"ERROR: No tie changes were retained.\",\r\n                                str(error)\r\n                            ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "55bbba58c7434746986315ea945baa6b",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "a3dc4f9c3c3d4b8797aa1c165596a248",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "c3a38b6454764edba22dcafd878ebb99",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b20bbaa8075546378c0309510e72289b",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "37ee44329bc0465c9a557dee05d2e1de",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "fad108c8e8c647069709048d12cbb347",
+          "Name": "IN[4]",
+          "Description": "Input #4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "95bee4495b40446c971f91bd36a4c7da",
+          "Name": "IN[5]",
+          "Description": "Input #5",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ba8affdff4244152ad0b2d038cc797b9",
+          "Name": "IN[6]",
+          "Description": "Input #6",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8e74ca73af4f410e83b028f9dc866162",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 312.0,
+      "WatchHeight": 200.0,
+      "Id": "8aeacad1ff584c42aa8923b70e61c7a8",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "339c00f6b70a45c99ac89069064a25b6",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "70db0198db074f72bb882c67c61c58b7",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 200,
+      "MinimumValue": 100,
+      "StepValue": 25,
+      "Id": "e50c059b8fbf41c6b6f3ddf81a667f6e",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "e95bb2022e49427bb4a0b99d0a3a9bec",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 150
+    },
+    {
+      "ConcreteType": "Dynamo.Nodes.DSModelElementsSelection, DSRevitNodesUI",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [
+        "793cad2a-d0d6-44ae-a59b-dfbe2d50972a-00003d75",
+        "9cb49814-d929-4358-8870-5f5d1681bdbd-0005151d",
+        "9cb49814-d929-4358-8870-5f5d1681bdbd-000515af",
+        "b8b72a75-14f1-404e-920e-085cb0bdae04-00057410",
+        "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3edc",
+        "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3fa6",
+        "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b3fb2",
+        "be634cb3-59fb-4c49-b5d0-e18df02f1aff-000b4000"
+      ],
+      "Id": "a254146be1a34c3c9e53db68d24de4d9",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "f25f1a90f2b8408aa0215ab9d03942bb",
+          "Name": "Elements",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Select multiple elements from the Revit document."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 125,
+      "MinimumValue": 75,
+      "StepValue": 25,
+      "Id": "64d4938283294422ac5d08452495e127",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "41694ac0e8684ea384a3276f0604686f",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 100
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 75,
+      "MinimumValue": 25,
+      "StepValue": 5,
+      "Id": "7a1dc9e0f5a54b29a5e10449bdf0635b",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "96c7e91bdc014e48960bc11bfd8f13b7",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 40
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.CustomSelection, CoreNodeModels",
+      "IsVisibleDropDownTextBlock": true,
+      "SerializedItems": [
+        {
+          "Name": "10mm",
+          "Item": "0"
+        },
+        {
+          "Name": "12mm",
+          "Item": "1"
+        },
+        {
+          "Name": "16mm",
+          "Item": "2"
+        },
+        {
+          "Name": "20mm",
+          "Item": "3"
+        },
+        {
+          "Name": "25mm",
+          "Item": "5"
+        }
+      ],
+      "SelectedIndex": 2,
+      "SelectedString": "16mm",
+      "Id": "aa8343dd97bc42759dd621c32c74078e",
+      "NodeType": "ExtensionNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "81f9c480542c48818a1ea4940ca48ef0",
+          "Name": "value",
+          "Description": "Selected value",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "A dropdown menu with customizable values."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "f739cb9d7fce44bf84a6dd3edaf3e3d0",
+      "End": "9c71a6344d084ff6885b44efd191dbb1",
+      "Id": "44e983c3ee7a446aac28d7b791a0df70",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f739cb9d7fce44bf84a6dd3edaf3e3d0",
+      "End": "a3dc4f9c3c3d4b8797aa1c165596a248",
+      "Id": "ae7957e27fe64d42b6120f96efe44afd",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "651788ab4db2462d88247f02cc8edf07",
+      "End": "0ded32573b1f47738b3de72b1653d4e8",
+      "Id": "bdda22c3dd014f74861b5b651cc7a074",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "651788ab4db2462d88247f02cc8edf07",
+      "End": "ba8affdff4244152ad0b2d038cc797b9",
+      "Id": "bb768b59f1c74b519026147227c7d240",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b10ab2132bb74a388160f24f0c3f1188",
+      "End": "33af99ad5762484faa4ad435d79afa7a",
+      "Id": "2870948707944e36ab40c9613445e548",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b10ab2132bb74a388160f24f0c3f1188",
+      "End": "a031bd2fac2c400e99b650b5db672ba6",
+      "Id": "fdff6c86bf8e4373ad6ab9bea6939173",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fcc50fc5b3e744ceaba5d3d00271a92f",
+      "End": "9f0fbff42131465699d443a8d2dd2596",
+      "Id": "7a446b5cc26140d5838fc4695acb7fa4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "12697342c36a4da4af90ad45dac021e7",
+      "End": "361284a3fdb443e5be873e235b685288",
+      "Id": "6fa9c413adf64b628eda4798723a96d4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "12697342c36a4da4af90ad45dac021e7",
+      "End": "e57f0da8e91b4f08b6b02a105fe47b1b",
+      "Id": "18cf2503c4c544959d24c8b4fcb519f2",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "12697342c36a4da4af90ad45dac021e7",
+      "End": "34791133d660427ba68fcb46e23bb001",
+      "Id": "3098c05ad5514cf3a2de70592533dacf",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ebff514f814d4b7ab9feb1960df7d009",
+      "End": "73555b57001d4edd9ea364fb72c94e30",
+      "Id": "94020c463cef48e2874185f55ef6ff8b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ebff514f814d4b7ab9feb1960df7d009",
+      "End": "df47822a3ec14dbb817082d71fa63719",
+      "Id": "13345e0c9c6b432991e10a61e501452d",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "c7bde84f473241a1b2111f5175a34dd0",
+      "End": "7d5f02a3a5544027bb015cbf334eddae",
+      "Id": "98f07fa860724fbbb94de51329fd83ef",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "4dacf6b9417c4707b2b50d7e16e7b513",
+      "End": "a3bbebb9cc494801a4ed9ca0ab850428",
+      "Id": "75802f22a4374875b249b167b1cf0a4d",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "99961961c03642968696aab19b70cd63",
+      "End": "7186174c1604467bb4070b4a06a9a381",
+      "Id": "edd8658fe4264e84916db7b8e1d66993",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "99961961c03642968696aab19b70cd63",
+      "End": "b20bbaa8075546378c0309510e72289b",
+      "Id": "b06c3f6259eb458ca62ba6be0f746073",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "8e74ca73af4f410e83b028f9dc866162",
+      "End": "339c00f6b70a45c99ac89069064a25b6",
+      "Id": "2c4d469fd4574c17a9bee3c628fa88c9",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e95bb2022e49427bb4a0b99d0a3a9bec",
+      "End": "fad108c8e8c647069709048d12cbb347",
+      "Id": "f5aa4853fd084087bc014c8d3842c697",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f25f1a90f2b8408aa0215ab9d03942bb",
+      "End": "c3a38b6454764edba22dcafd878ebb99",
+      "Id": "6dd19f656ce2487b96315bea9fdf0328",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "41694ac0e8684ea384a3276f0604686f",
+      "End": "37ee44329bc0465c9a557dee05d2e1de",
+      "Id": "dfc399ad92504d839c8ddbb8c5977c0c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "96c7e91bdc014e48960bc11bfd8f13b7",
+      "End": "95bee4495b40446c971f91bd36a4c7da",
+      "Id": "1c74c87ea06247888739190b51183d12",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "81f9c480542c48818a1ea4940ca48ef0",
+      "End": "0ff4b181b59940569bd0b9e1d61fc22b",
+      "Id": "1e8cf7aeaa1846a4a15954cba2c790b6",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.6",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "9.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.6.0.9395",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "330f1cda21c54cbf96853db8f8010778",
+        "Name": "1-Select Column",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -615.4813720052575,
+        "Y": 9.628976472454667
+      },
+      {
+        "Id": "3a4281cec8e24b6db6513b2a97d2b58c",
+        "Name": "Main Bar",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 172.2736997266797,
+        "Y": 31.22534295845935
+      },
+      {
+        "Id": "b11cb766bae54e04a8a621a126daacfc",
+        "Name": "Bar Types",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -164.50062808519664,
+        "Y": -705.0938036833347
+      },
+      {
+        "Id": "e15749503d0242a8b4e039b37e269534",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -1164.0454490291872,
+        "Y": -521.3173460733915
+      },
+      {
+        "Id": "6f7c6cb11035439eb5d7552e9bded50e",
+        "Name": "Integer Slider",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -191.77438250610686,
+        "Y": -433.3077788376249
+      },
+      {
+        "Id": "2c4eeed6baa54cc59fceb81eec218687",
+        "Name": "List.GetItemAtIndex",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 260.0909180790437,
+        "Y": -510.569717434796
+      },
+      {
+        "Id": "5b2d5e786089479f8aa9f4551489f419",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 581.890285372554,
+        "Y": -789.8072222274378
+      },
+      {
+        "Id": "acd2eb0e08444652adf0173dc058d041",
+        "Name": "3 Main Bar Diameter",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -524.6202699870328,
+        "Y": -971.262030711531
+      },
+      {
+        "Id": "76d379b88eb247aba60890c511067e91",
+        "Name": "List.GetItemAtIndex",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 268.7581035190054,
+        "Y": -251.93565715653608
+      },
+      {
+        "Id": "eb20274a3b5249bf8eacb3febd4a44ac",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 572.9210652751317,
+        "Y": -199.5141527535294
+      },
+      {
+        "Id": "ed7f46b989254cd9b4dd8418d7251ed3",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 565.1580244226242,
+        "Y": 80.9556431255055
+      },
+      {
+        "Id": "1670b8033c334fe0a7ee26b4dc36258e",
+        "Name": "2-Number of Bars",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -614.6447548795238,
+        "Y": 158.69760887361213
+      },
+      {
+        "Id": "5b7e6e073304457d94f490dcfaee0965",
+        "Name": "Integer Slider",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -647.4463512692373,
+        "Y": 896.4434368233207
+      },
+      {
+        "Id": "efe4d6a4e91d49bfaf44e67f743855c6",
+        "Name": "Rebar Type",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -157.09544490498433,
+        "Y": 845.3463938267205
+      },
+      {
+        "Id": "e64ce3c4fad7466996490acc91c2a709",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 747.885705084186,
+        "Y": 688.4168178379064
+      },
+      {
+        "Id": "55bbba58c7434746986315ea945baa6b",
+        "Name": "Ties/Stirrups",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 467.74476823595364,
+        "Y": 1017.7073587977477
+      },
+      {
+        "Id": "8aeacad1ff584c42aa8923b70e61c7a8",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 757.6866468420397,
+        "Y": 1082.1130464007333
+      },
+      {
+        "Id": "e50c059b8fbf41c6b6f3ddf81a667f6e",
+        "Name": "6 Middle Spacing",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -166.5220675536538,
+        "Y": 1151.616276935655
+      },
+      {
+        "Id": "a254146be1a34c3c9e53db68d24de4d9",
+        "Name": "4 Connected Beams",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -608.3794142257673,
+        "Y": 387.9711156526547
+      },
+      {
+        "Id": "64d4938283294422ac5d08452495e127",
+        "Name": "5 Confinement Spacing",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -164.6627094407964,
+        "Y": 1024.339772612908
+      },
+      {
+        "Id": "7a1dc9e0f5a54b29a5e10449bdf0635b",
+        "Name": "7 Concrete Cover",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -167.3572888112597,
+        "Y": 1282.4155974207645
+      },
+      {
+        "Id": "aa8343dd97bc42759dd621c32c74078e",
+        "Name": "3 Main Bar Diameter",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -653.6823938756085,
+        "Y": -541.930531877759
+      }
+    ],
+    "Annotations": [],
+    "X": -194.72815941811243,
+    "Y": -554.5944462766555,
+    "Zoom": 0.9084458212877623
+  }
+}

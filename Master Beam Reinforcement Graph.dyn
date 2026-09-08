@@ -1,0 +1,872 @@
+{
+  "Uuid": "858d8cf4-c8cd-43d4-b7fb-8aa6abab3ea6",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Master Beam Reinforcement Graph",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import StructuralType\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# T01 — USED STRUCTURAL BEAM TYPES\r\n#\r\n# Scans actual structural beam instances in the project\r\n# and returns unique beam types currently in use.\r\n#\r\n# OUT:\r\n# [0] Type Names\r\n# [1] Type IDs\r\n# [2] Type Elements\r\n# [3] Instance Counts\r\n# [4] Number of Types\r\n# ============================================================\r\n\r\n\r\ndef id_value(element_id):\r\n\r\n    try:\r\n        return int(element_id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element_id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\ndef get_type_name(beam_type):\r\n\r\n    name = None\r\n\r\n    try:\r\n        p = beam_type.get_Parameter(\r\n            BuiltInParameter.SYMBOL_NAME_PARAM\r\n        )\r\n\r\n        if p is not None:\r\n            name = p.AsString()\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n    if not name:\r\n\r\n        try:\r\n            name = beam_type.Name\r\n        except:\r\n            pass\r\n\r\n\r\n    if not name:\r\n        name = \"Unnamed Type\"\r\n\r\n    return str(name)\r\n\r\n\r\nall_framing = (\r\n    FilteredElementCollector(doc)\r\n    .OfCategory(BuiltInCategory.OST_StructuralFraming)\r\n    .WhereElementIsNotElementType()\r\n    .ToElements()\r\n)\r\n\r\n\r\ntype_map = {}\r\n\r\n\r\nfor element in all_framing:\r\n\r\n    try:\r\n\r\n        if element.StructuralType != StructuralType.Beam:\r\n            continue\r\n\r\n\r\n        type_id = element.GetTypeId()\r\n\r\n        tid = id_value(\r\n            type_id\r\n        )\r\n\r\n\r\n        if tid is None:\r\n            continue\r\n\r\n\r\n        if tid not in type_map:\r\n\r\n            beam_type = doc.GetElement(\r\n                type_id\r\n            )\r\n\r\n            if beam_type is None:\r\n                continue\r\n\r\n\r\n            type_map[tid] = {\r\n                \"name\": get_type_name(beam_type),\r\n                \"type\": beam_type,\r\n                \"count\": 0\r\n            }\r\n\r\n\r\n        type_map[tid][\"count\"] += 1\r\n\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n# ============================================================\r\n# SORT BY TYPE NAME\r\n# ============================================================\r\n\r\nitems = []\r\n\r\n\r\nfor tid in type_map:\r\n\r\n    data = type_map[tid]\r\n\r\n    items.append(\r\n        [\r\n            str(data[\"name\"]),\r\n            tid,\r\n            data[\"type\"],\r\n            data[\"count\"]\r\n        ]\r\n    )\r\n\r\n\r\nitems.sort(\r\n    key=lambda x: x[0].lower()\r\n)\r\n\r\n\r\ntype_names = []\r\ntype_ids = []\r\ntype_elements = []\r\ninstance_counts = []\r\n\r\n\r\nfor item in items:\r\n\r\n    type_names.append(\r\n        item[0]\r\n    )\r\n\r\n    type_ids.append(\r\n        item[1]\r\n    )\r\n\r\n    type_elements.append(\r\n        item[2]\r\n    )\r\n\r\n    instance_counts.append(\r\n        item[3]\r\n    )\r\n\r\n\r\nOUT = [\r\n    type_names,\r\n    type_ids,\r\n    type_elements,\r\n    instance_counts,\r\n    len(type_names)\r\n]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "7bfe23d5827c44c09bb7dcf0a5326cf3",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "968f32b99bb84e7692f2a1433ae27b1f",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 200.0,
+      "WatchHeight": 200.0,
+      "Id": "e5e2b45bc6e44b98b60cb1c5f22c88bc",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "50b26d8852354808a08bdc04d10043e0",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "27098bb3942648368b73b54b6db58f98",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import StructuralType\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# T03 — GET ALL BEAM INSTANCES OF SELECTED TYPE\r\n#\r\n# IN[0] = Entire T02 output\r\n#\r\n# OUT:\r\n# [0] Type Name\r\n# [1] Type ID\r\n# [2] Beam Instances\r\n# [3] Beam Count\r\n# [4] Beam IDs\r\n# [5] Ready\r\n# [6] Status\r\n# ============================================================\r\n\r\n\r\ndef id_value(element_id):\r\n\r\n    try:\r\n        return int(element_id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element_id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\nt02 = IN[0]\r\n\r\n\r\ntry:\r\n\r\n    type_name = t02[0]\r\n    selected_type_id = int(t02[1])\r\n    selected_ready = bool(t02[4])\r\n\r\nexcept:\r\n\r\n    selected_ready = False\r\n    type_name = None\r\n    selected_type_id = None\r\n\r\n\r\nbeams = []\r\nbeam_ids = []\r\n\r\n\r\nif selected_ready:\r\n\r\n    all_framing = (\r\n        FilteredElementCollector(doc)\r\n        .OfCategory(\r\n            BuiltInCategory.OST_StructuralFraming\r\n        )\r\n        .WhereElementIsNotElementType()\r\n        .ToElements()\r\n    )\r\n\r\n\r\n    for element in all_framing:\r\n\r\n        try:\r\n\r\n            if (\r\n                element.StructuralType\r\n                != StructuralType.Beam\r\n            ):\r\n\r\n                continue\r\n\r\n\r\n            current_type_id = id_value(\r\n                element.GetTypeId()\r\n            )\r\n\r\n\r\n            if current_type_id != selected_type_id:\r\n                continue\r\n\r\n\r\n            beams.append(\r\n                element\r\n            )\r\n\r\n\r\n            beam_ids.append(\r\n                id_value(\r\n                    element.Id\r\n                )\r\n            )\r\n\r\n\r\n        except:\r\n            pass\r\n\r\n\r\nready = (\r\n    selected_ready\r\n    and\r\n    len(beams) > 0\r\n)\r\n\r\n\r\nif ready:\r\n\r\n    status = \"SELECTED BEAM INSTANCES READY\"\r\n\r\nelif not selected_ready:\r\n\r\n    status = \"NO VALID TYPE SELECTED\"\r\n\r\nelse:\r\n\r\n    status = \"NO BEAM INSTANCES FOUND\"\r\n\r\n\r\nOUT = [\r\n\r\n    type_name,              # 0\r\n\r\n    selected_type_id,       # 1\r\n\r\n    beams,                  # 2\r\n\r\n    len(beams),             # 3\r\n\r\n    beam_ids,               # 4\r\n\r\n    ready,                  # 5\r\n\r\n    status                  # 6\r\n]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "65c48025288543a69b99a28393e525e7",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "abc983ea0edd417d9c8738a508874010",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "14232da4ecb740a1adfe75a547e5cfc3",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# ============================================================\r\n# T04 — SCRIPT-BASED REBAR CONFIGURATION\r\n#\r\n# IN[0] = Entire T03 output\r\n#\r\n# T03:\r\n# [0] Type Name\r\n# [1] Type ID\r\n# [2] Beam Instances\r\n# [3] Beam Count\r\n# [4] Beam IDs\r\n# [5] Ready\r\n# [6] Status\r\n#\r\n# OUT:\r\n# [0] Type Name\r\n# [1] Type ID\r\n# [2] Beam Count\r\n# [3] Beam IDs\r\n# [4] TopQty\r\n# [5] BottomQty\r\n# [6] TopDia\r\n# [7] BottomDia\r\n# [8] StirrupDia\r\n# [9] Cover\r\n# [10] EndSpacing\r\n# [11] MidSpacing\r\n# [12] ContinuousQty\r\n# [13] ExtraQty\r\n# [14] Support Extra Layer\r\n# [15] Midspan Extra Layer\r\n# [16] Support Section\r\n# [17] Midspan Section\r\n# [18] Beam Instances\r\n# [19] Ready\r\n# [20] Status\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# REBAR CONFIGURATION TABLE\r\n#\r\n# Edit this table to control reinforcement.\r\n# No Revit project parameters are required.\r\n# ============================================================\r\n\r\nREBAR_CONFIG = {\r\n\r\n    \"300 x 600mm\": {\r\n        \"TopQty\": 4,\r\n        \"BottomQty\": 4,\r\n        \"TopDia\": 16,\r\n        \"BottomDia\": 16,\r\n        \"StirrupDia\": 10,\r\n        \"Cover\": 40,\r\n        \"EndSpacing\": 100,\r\n        \"MidSpacing\": 150\r\n    },\r\n\r\n    \"400 x 800mm\": {\r\n        \"TopQty\": 6,\r\n        \"BottomQty\": 4,\r\n        \"TopDia\": 20,\r\n        \"BottomDia\": 20,\r\n        \"StirrupDia\": 10,\r\n        \"Cover\": 40,\r\n        \"EndSpacing\": 100,\r\n        \"MidSpacing\": 150\r\n    }\r\n\r\n}\r\n\r\n\r\n# ============================================================\r\n# INPUT\r\n# ============================================================\r\n\r\nt03 = IN[0]\r\n\r\n\r\ntry:\r\n\r\n    type_name = str(t03[0]).strip()\r\n\r\n    type_id = t03[1]\r\n\r\n    beams = list(t03[2])\r\n\r\n    beam_count = int(t03[3])\r\n\r\n    beam_ids = list(t03[4])\r\n\r\n    t03_ready = bool(t03[5])\r\n\r\nexcept:\r\n\r\n    OUT = [\r\n        None,\r\n        None,\r\n        0,\r\n        [],\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        [],\r\n        False,\r\n        \"INVALID T03 INPUT\"\r\n    ]\r\n\r\n    raise Exception(\"Invalid T03 input.\")\r\n\r\n\r\n# ============================================================\r\n# FIND CONFIGURATION\r\n# ============================================================\r\n\r\nconfig = None\r\n\r\n\r\nfor key in REBAR_CONFIG:\r\n\r\n    if str(key).strip().lower() == type_name.lower():\r\n\r\n        config = REBAR_CONFIG[key]\r\n\r\n        break\r\n\r\n\r\n# ============================================================\r\n# NO CONFIG\r\n# ============================================================\r\n\r\nif not t03_ready:\r\n\r\n    OUT = [\r\n        type_name,\r\n        type_id,\r\n        beam_count,\r\n        beam_ids,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        beams,\r\n        False,\r\n        \"T03 NOT READY\"\r\n    ]\r\n\r\n\r\nelif config is None:\r\n\r\n    OUT = [\r\n        type_name,\r\n        type_id,\r\n        beam_count,\r\n        beam_ids,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        None,\r\n        beams,\r\n        False,\r\n        \"NO REBAR CONFIGURATION FOR TYPE\"\r\n    ]\r\n\r\n\r\nelse:\r\n\r\n    # ========================================================\r\n    # READ CONFIG\r\n    # ========================================================\r\n\r\n    top_qty = int(\r\n        config[\"TopQty\"]\r\n    )\r\n\r\n    bottom_qty = int(\r\n        config[\"BottomQty\"]\r\n    )\r\n\r\n    top_dia = float(\r\n        config[\"TopDia\"]\r\n    )\r\n\r\n    bottom_dia = float(\r\n        config[\"BottomDia\"]\r\n    )\r\n\r\n    stirrup_dia = float(\r\n        config[\"StirrupDia\"]\r\n    )\r\n\r\n    cover = float(\r\n        config[\"Cover\"]\r\n    )\r\n\r\n    end_spacing = float(\r\n        config[\"EndSpacing\"]\r\n    )\r\n\r\n    mid_spacing = float(\r\n        config[\"MidSpacing\"]\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # QUANTITY LOGIC\r\n    # ========================================================\r\n\r\n    continuous_qty = min(\r\n        top_qty,\r\n        bottom_qty\r\n    )\r\n\r\n    extra_qty = abs(\r\n        top_qty - bottom_qty\r\n    )\r\n\r\n\r\n    if top_qty > bottom_qty:\r\n\r\n        support_extra_layer = \"TOP\"\r\n        midspan_extra_layer = \"BOTTOM\"\r\n\r\n\r\n    elif bottom_qty > top_qty:\r\n\r\n        support_extra_layer = \"BOTTOM\"\r\n        midspan_extra_layer = \"TOP\"\r\n\r\n\r\n    else:\r\n\r\n        support_extra_layer = \"NONE\"\r\n        midspan_extra_layer = \"NONE\"\r\n\r\n\r\n    support_section = [\r\n        top_qty,\r\n        bottom_qty\r\n    ]\r\n\r\n    midspan_section = [\r\n        bottom_qty,\r\n        top_qty\r\n    ]\r\n\r\n\r\n    # ========================================================\r\n    # VALIDATION\r\n    # ========================================================\r\n\r\n    errors = []\r\n\r\n\r\n    if top_qty < 2:\r\n        errors.append(\r\n            \"TopQty must be at least 2.\"\r\n        )\r\n\r\n    if bottom_qty < 2:\r\n        errors.append(\r\n            \"BottomQty must be at least 2.\"\r\n        )\r\n\r\n    if top_dia <= 0:\r\n        errors.append(\r\n            \"TopDia must be greater than 0.\"\r\n        )\r\n\r\n    if bottom_dia <= 0:\r\n        errors.append(\r\n            \"BottomDia must be greater than 0.\"\r\n        )\r\n\r\n    if stirrup_dia <= 0:\r\n        errors.append(\r\n            \"StirrupDia must be greater than 0.\"\r\n        )\r\n\r\n    if cover <= 0:\r\n        errors.append(\r\n            \"Cover must be greater than 0.\"\r\n        )\r\n\r\n    if end_spacing <= 0:\r\n        errors.append(\r\n            \"EndSpacing must be greater than 0.\"\r\n        )\r\n\r\n    if mid_spacing <= 0:\r\n        errors.append(\r\n            \"MidSpacing must be greater than 0.\"\r\n        )\r\n\r\n\r\n    ready = (\r\n        len(errors) == 0\r\n        and\r\n        beam_count > 0\r\n    )\r\n\r\n\r\n    status = (\r\n        \"SCRIPT REBAR CONFIG READY\"\r\n        if ready\r\n        else \"SCRIPT REBAR CONFIG FAILED\"\r\n    )\r\n\r\n\r\n    OUT = [\r\n\r\n        type_name,                  # 0\r\n\r\n        type_id,                    # 1\r\n\r\n        beam_count,                 # 2\r\n\r\n        beam_ids,                   # 3\r\n\r\n        top_qty,                    # 4\r\n\r\n        bottom_qty,                 # 5\r\n\r\n        top_dia,                    # 6\r\n\r\n        bottom_dia,                 # 7\r\n\r\n        stirrup_dia,                # 8\r\n\r\n        cover,                      # 9\r\n\r\n        end_spacing,                # 10\r\n\r\n        mid_spacing,                # 11\r\n\r\n        continuous_qty,             # 12\r\n\r\n        extra_qty,                  # 13\r\n\r\n        support_extra_layer,        # 14\r\n\r\n        midspan_extra_layer,        # 15\r\n\r\n        support_section,            # 16\r\n\r\n        midspan_section,            # 17\r\n\r\n        beams,                      # 18\r\n\r\n        ready,                      # 19\r\n\r\n        status                      # 20\r\n    ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "0ffe860400f54d8f8547fd2f0b1a1373",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "0cede7aee1e8420ba1bd44108b5456fa",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3b53cef5bcda4aa1b6566dec7f6ff983",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8f8457dc30b74ad09c49b8e7ed9c6343",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# B01 — SELECTED TYPE GEOMETRY PREFLIGHT\r\n#\r\n# IN[0] = entire T04 output\r\n#\r\n# T04:\r\n# [0]  Type Name\r\n# [1]  Type ID\r\n# [2]  Beam Count\r\n# [3]  Beam IDs\r\n# [4]  TopQty\r\n# [5]  BottomQty\r\n# [6]  TopDia\r\n# [7]  BottomDia\r\n# [8]  StirrupDia\r\n# [9]  Cover\r\n# [10] EndSpacing\r\n# [11] MidSpacing\r\n# [12] ContinuousQty\r\n# [13] ExtraQty\r\n# [14] Support Extra Layer\r\n# [15] Midspan Extra Layer\r\n# [16] Support Section\r\n# [17] Midspan Section\r\n# [18] Beam Instances\r\n# [19] Ready\r\n# [20] Status\r\n#\r\n# OUT:\r\n# [0] Beam reports\r\n# [1] Input beam count\r\n# [2] Ready beams\r\n# [3] Ready count\r\n# [4] Ready beam IDs\r\n# [5] Failed reports\r\n# [6] Failed count\r\n# [7] Overall ready\r\n# [8] T04 config\r\n# [9] Status\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# HELPERS\r\n# ============================================================\r\n\r\ndef as_list(value):\r\n    if value is None:\r\n        return []\r\n    if isinstance(value, list):\r\n        return value\r\n    try:\r\n        return list(value)\r\n    except:\r\n        return [value]\r\n\r\n\r\ndef id_value(element):\r\n    try:\r\n        return int(element.Id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element.Id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\ndef internal_to_mm(value):\r\n    return UnitUtils.ConvertFromInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef get_type_dimension_mm(beam_type, names):\r\n\r\n    for name in names:\r\n\r\n        try:\r\n            p = beam_type.LookupParameter(name)\r\n\r\n            if (\r\n                p is not None\r\n                and\r\n                p.StorageType == StorageType.Double\r\n            ):\r\n                return internal_to_mm(\r\n                    p.AsDouble()\r\n                )\r\n\r\n        except:\r\n            pass\r\n\r\n    return None\r\n\r\n\r\n# ============================================================\r\n# READ T04\r\n# ============================================================\r\n\r\nt04 = IN[0]\r\n\r\ntry:\r\n\r\n    type_name = t04[0]\r\n    type_id = t04[1]\r\n\r\n    expected_beam_count = int(t04[2])\r\n\r\n    top_qty = int(t04[4])\r\n    bottom_qty = int(t04[5])\r\n\r\n    top_dia = float(t04[6])\r\n    bottom_dia = float(t04[7])\r\n\r\n    stirrup_dia = float(t04[8])\r\n    cover = float(t04[9])\r\n\r\n    end_spacing = float(t04[10])\r\n    mid_spacing = float(t04[11])\r\n\r\n    continuous_qty = int(t04[12])\r\n    extra_qty = int(t04[13])\r\n\r\n    support_extra_layer = t04[14]\r\n    midspan_extra_layer = t04[15]\r\n\r\n    beams_raw = as_list(\r\n        t04[18]\r\n    )\r\n\r\n    t04_ready = bool(\r\n        t04[19]\r\n    )\r\n\r\nexcept Exception as ex:\r\n\r\n    OUT = [\r\n        [],\r\n        0,\r\n        [],\r\n        0,\r\n        [],\r\n        [],\r\n        0,\r\n        False,\r\n        None,\r\n        \"INVALID T04 INPUT: {}\".format(str(ex))\r\n    ]\r\n\r\n    raise Exception(\r\n        \"Invalid T04 input: {}\".format(str(ex))\r\n    )\r\n\r\n\r\n# ============================================================\r\n# UNWRAP BEAMS\r\n# ============================================================\r\n\r\nbeams = []\r\n\r\nfor item in beams_raw:\r\n\r\n    try:\r\n        beam = UnwrapElement(item)\r\n    except:\r\n        beam = item\r\n\r\n    if beam is not None:\r\n        beams.append(beam)\r\n\r\n\r\n# ============================================================\r\n# PROCESS\r\n# ============================================================\r\n\r\nreports = []\r\n\r\nready_beams = []\r\nready_ids = []\r\n\r\nfailed_reports = []\r\n\r\n\r\nfor beam in beams:\r\n\r\n    errors = []\r\n    warnings = []\r\n\r\n    beam_id = id_value(\r\n        beam\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # LOCATION CURVE\r\n    # ========================================================\r\n\r\n    curve = None\r\n    length_mm = None\r\n\r\n\r\n    try:\r\n\r\n        location = beam.Location\r\n\r\n        if location is None:\r\n            errors.append(\r\n                \"Beam has no Location.\"\r\n            )\r\n\r\n        else:\r\n\r\n            curve = location.Curve\r\n\r\n            if curve is None:\r\n                errors.append(\r\n                    \"Beam has no LocationCurve.\"\r\n                )\r\n\r\n            else:\r\n\r\n                length_mm = internal_to_mm(\r\n                    curve.Length\r\n                )\r\n\r\n                if length_mm <= 0:\r\n                    errors.append(\r\n                        \"Beam length is invalid.\"\r\n                    )\r\n\r\n    except Exception as ex:\r\n\r\n        errors.append(\r\n            \"LocationCurve error: {}\".format(\r\n                str(ex)\r\n            )\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # TYPE\r\n    # ========================================================\r\n\r\n    beam_type = None\r\n    beam_width = None\r\n    beam_depth = None\r\n\r\n\r\n    try:\r\n\r\n        beam_type = doc.GetElement(\r\n            beam.GetTypeId()\r\n        )\r\n\r\n    except:\r\n        beam_type = None\r\n\r\n\r\n    if beam_type is None:\r\n\r\n        errors.append(\r\n            \"Beam type not found.\"\r\n        )\r\n\r\n    else:\r\n\r\n        beam_width = get_type_dimension_mm(\r\n            beam_type,\r\n            [\r\n                \"b\",\r\n                \"Width\",\r\n                \"B\"\r\n            ]\r\n        )\r\n\r\n        beam_depth = get_type_dimension_mm(\r\n            beam_type,\r\n            [\r\n                \"h\",\r\n                \"Depth\",\r\n                \"H\"\r\n            ]\r\n        )\r\n\r\n\r\n        if beam_width is None or beam_width <= 0:\r\n\r\n            errors.append(\r\n                \"Beam width not found.\"\r\n            )\r\n\r\n\r\n        if beam_depth is None or beam_depth <= 0:\r\n\r\n            errors.append(\r\n                \"Beam depth not found.\"\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # VERIFY TYPE MATCH\r\n    # ========================================================\r\n\r\n    try:\r\n\r\n        current_type_id = id_value(\r\n            beam_type\r\n        )\r\n\r\n        if current_type_id != int(type_id):\r\n\r\n            errors.append(\r\n                \"Beam does not match selected type.\"\r\n            )\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n    # ========================================================\r\n    # CONFIG VALIDATION\r\n    # ========================================================\r\n\r\n    if top_qty < 2:\r\n        errors.append(\r\n            \"TopQty must be >= 2.\"\r\n        )\r\n\r\n    if bottom_qty < 2:\r\n        errors.append(\r\n            \"BottomQty must be >= 2.\"\r\n        )\r\n\r\n    if top_dia <= 0:\r\n        errors.append(\r\n            \"TopDia invalid.\"\r\n        )\r\n\r\n    if bottom_dia <= 0:\r\n        errors.append(\r\n            \"BottomDia invalid.\"\r\n        )\r\n\r\n    if stirrup_dia <= 0:\r\n        errors.append(\r\n            \"StirrupDia invalid.\"\r\n        )\r\n\r\n    if cover <= 0:\r\n        errors.append(\r\n            \"Cover invalid.\"\r\n        )\r\n\r\n    if end_spacing <= 0:\r\n        errors.append(\r\n            \"EndSpacing invalid.\"\r\n        )\r\n\r\n    if mid_spacing <= 0:\r\n        errors.append(\r\n            \"MidSpacing invalid.\"\r\n        )\r\n\r\n\r\n    if abs(top_dia - bottom_dia) > 0.5:\r\n\r\n        warnings.append(\r\n            \"TopDia and BottomDia differ.\"\r\n        )\r\n\r\n\r\n    ready = (\r\n        len(errors) == 0\r\n    )\r\n\r\n\r\n    status = (\r\n        \"READY\"\r\n        if ready\r\n        else \"FAILED\"\r\n    )\r\n\r\n\r\n    report = [\r\n\r\n        beam_id,                   # 0\r\n        ready,                     # 1\r\n        status,                    # 2\r\n\r\n        errors,                    # 3\r\n        warnings,                  # 4\r\n\r\n        [\r\n            length_mm,\r\n            beam_width,\r\n            beam_depth\r\n        ],                          # 5\r\n\r\n        [\r\n            top_qty,\r\n            bottom_qty,\r\n            top_dia,\r\n            bottom_dia\r\n        ],                          # 6\r\n\r\n        [\r\n            continuous_qty,\r\n            extra_qty,\r\n            support_extra_layer,\r\n            midspan_extra_layer\r\n        ],                          # 7\r\n\r\n        [\r\n            stirrup_dia,\r\n            cover,\r\n            end_spacing,\r\n            mid_spacing\r\n        ],                          # 8\r\n\r\n        beam                       # 9\r\n    ]\r\n\r\n\r\n    reports.append(\r\n        report\r\n    )\r\n\r\n\r\n    if ready:\r\n\r\n        ready_beams.append(\r\n            beam\r\n        )\r\n\r\n        ready_ids.append(\r\n            beam_id\r\n        )\r\n\r\n    else:\r\n\r\n        failed_reports.append(\r\n            report\r\n        )\r\n\r\n\r\n# ============================================================\r\n# FINAL\r\n# ============================================================\r\n\r\noverall_ready = (\r\n    t04_ready\r\n    and\r\n    len(beams) > 0\r\n    and\r\n    len(failed_reports) == 0\r\n)\r\n\r\n\r\nstatus = (\r\n    \"B01 PREFLIGHT COMPLETE\"\r\n    if overall_ready\r\n    else \"B01 PREFLIGHT FAILED\"\r\n)\r\n\r\n\r\nOUT = [\r\n\r\n    reports,                       # 0\r\n\r\n    len(beams),                    # 1\r\n\r\n    ready_beams,                   # 2\r\n\r\n    len(ready_beams),              # 3\r\n\r\n    ready_ids,                     # 4\r\n\r\n    failed_reports,                # 5\r\n\r\n    len(failed_reports),           # 6\r\n\r\n    overall_ready,                 # 7\r\n\r\n    [\r\n        type_name,\r\n        type_id,\r\n        top_qty,\r\n        bottom_qty,\r\n        top_dia,\r\n        bottom_dia,\r\n        stirrup_dia,\r\n        cover,\r\n        end_spacing,\r\n        mid_spacing,\r\n        continuous_qty,\r\n        extra_qty,\r\n        support_extra_layer,\r\n        midspan_extra_layer\r\n    ],                              # 8\r\n\r\n    status                         # 9\r\n]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "b02f80c09fe94477bf5c1674bca2fc8d",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "174a9509a1e04028b7e782c58cfc84f9",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "dd12ed5f22144759a88dab5a468adb40",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import StructuralType\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# B02 — SUPPORT / CONTINUITY PREFLIGHT\r\n#\r\n# IN[0] = Entire B01 output\r\n#\r\n# B01 beam report:\r\n# [0] Beam ID\r\n# [1] Ready\r\n# [2] Status\r\n# [3] Errors\r\n# [4] Warnings\r\n# [5] [Length, Width, Depth]\r\n# [6] [TopQty, BottomQty, TopDia, BottomDia]\r\n# [7] [ContinuousQty, ExtraQty,\r\n#      SupportExtraLayer, MidspanExtraLayer]\r\n# [8] [StirrupDia, Cover, EndSpacing, MidSpacing]\r\n# [9] Beam\r\n#\r\n#\r\n# OUT:\r\n# [0] Detailed reports\r\n# [1] Beams received\r\n# [2] Fully ready beams\r\n# [3] Ready count\r\n# [4] Ready IDs\r\n# [5] Failed reports\r\n# [6] Failed count\r\n# [7] Overall ready\r\n# [8] Status\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# SETTINGS\r\n# ============================================================\r\n\r\n# Maximum XY distance from beam endpoint to column bounding box.\r\nSUPPORT_TOLERANCE_MM = 600.0\r\n\r\n# Continuation beam endpoint tolerance.\r\nCONTINUITY_END_TOLERANCE_MM = 500.0\r\n\r\n# Maximum sideways offset of continuation beam.\r\nCONTINUITY_LATERAL_TOLERANCE_MM = 150.0\r\n\r\n# Parallel/alignment tolerance.\r\nCONTINUITY_ALIGNMENT = 0.98\r\n\r\n\r\n# ============================================================\r\n# BASIC HELPERS\r\n# ============================================================\r\n\r\ndef as_list(value):\r\n\r\n    if value is None:\r\n        return []\r\n\r\n    if isinstance(value, list):\r\n        return value\r\n\r\n    try:\r\n        return list(value)\r\n    except:\r\n        return [value]\r\n\r\n\r\ndef unwrap(element):\r\n\r\n    try:\r\n        return UnwrapElement(element)\r\n    except:\r\n        return element\r\n\r\n\r\ndef id_value(element):\r\n\r\n    if element is None:\r\n        return None\r\n\r\n    try:\r\n        return int(element.Id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element.Id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\ndef internal_to_mm(value):\r\n\r\n    return UnitUtils.ConvertFromInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef mm_to_internal(value):\r\n\r\n    return UnitUtils.ConvertToInternalUnits(\r\n        float(value),\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef xyz_to_mm(point):\r\n\r\n    if point is None:\r\n        return None\r\n\r\n    return [\r\n        internal_to_mm(point.X),\r\n        internal_to_mm(point.Y),\r\n        internal_to_mm(point.Z)\r\n    ]\r\n\r\n\r\ndef distance_mm(p1, p2):\r\n\r\n    return internal_to_mm(\r\n        p1.DistanceTo(p2)\r\n    )\r\n\r\n\r\ndef get_beam_curve(beam):\r\n\r\n    try:\r\n\r\n        location = beam.Location\r\n\r\n        if location is None:\r\n            return None\r\n\r\n        return location.Curve\r\n\r\n    except:\r\n        return None\r\n\r\n\r\ndef unit_xy(vector):\r\n\r\n    try:\r\n\r\n        v = XYZ(\r\n            vector.X,\r\n            vector.Y,\r\n            0.0\r\n        )\r\n\r\n        if v.GetLength() <= 0.000001:\r\n            return None\r\n\r\n        return v.Normalize()\r\n\r\n    except:\r\n        return None\r\n\r\n\r\n# ============================================================\r\n# COLLECT COLUMNS\r\n# ============================================================\r\n\r\ncolumns = (\r\n    FilteredElementCollector(doc)\r\n    .OfCategory(BuiltInCategory.OST_StructuralColumns)\r\n    .WhereElementIsNotElementType()\r\n    .ToElements()\r\n)\r\n\r\n\r\n# ============================================================\r\n# COLLECT ALL BEAMS\r\n#\r\n# Used for continuity detection.\r\n# ============================================================\r\n\r\nall_framing = (\r\n    FilteredElementCollector(doc)\r\n    .OfCategory(BuiltInCategory.OST_StructuralFraming)\r\n    .WhereElementIsNotElementType()\r\n    .ToElements()\r\n)\r\n\r\n\r\nall_beams = []\r\n\r\n\r\nfor element in all_framing:\r\n\r\n    try:\r\n\r\n        if element.StructuralType == StructuralType.Beam:\r\n\r\n            all_beams.append(\r\n                element\r\n            )\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n# ============================================================\r\n# POINT → BOUNDING BOX XY DISTANCE\r\n#\r\n# Returns zero when endpoint is inside the column bbox in plan.\r\n# ============================================================\r\n\r\ndef point_to_bbox_xy_distance_mm(point, bbox):\r\n\r\n    if point.X < bbox.Min.X:\r\n\r\n        dx = bbox.Min.X - point.X\r\n\r\n    elif point.X > bbox.Max.X:\r\n\r\n        dx = point.X - bbox.Max.X\r\n\r\n    else:\r\n\r\n        dx = 0.0\r\n\r\n\r\n    if point.Y < bbox.Min.Y:\r\n\r\n        dy = bbox.Min.Y - point.Y\r\n\r\n    elif point.Y > bbox.Max.Y:\r\n\r\n        dy = point.Y - bbox.Max.Y\r\n\r\n    else:\r\n\r\n        dy = 0.0\r\n\r\n\r\n    d = math.sqrt(\r\n        dx * dx\r\n        +\r\n        dy * dy\r\n    )\r\n\r\n\r\n    return internal_to_mm(\r\n        d\r\n    )\r\n\r\n\r\n# ============================================================\r\n# COLUMN SUPPORT DETECTION\r\n#\r\n# New method:\r\n#\r\n# 1. Check every structural column.\r\n# 2. Measure beam-end XY distance to column bounding box.\r\n# 3. Pick nearest valid column.\r\n# 4. Project its bbox corners along beam axis.\r\n# 5. Derive near/far faces.\r\n#\r\n# This is much less sensitive than the old probe-line method.\r\n# ============================================================\r\n\r\ndef detect_column_support(\r\n    beam_end,\r\n    beam_direction,\r\n    is_start\r\n):\r\n\r\n    candidates = []\r\n\r\n\r\n    for column in columns:\r\n\r\n        try:\r\n\r\n            bbox = column.get_BoundingBox(\r\n                None\r\n            )\r\n\r\n            if bbox is None:\r\n                continue\r\n\r\n\r\n            # =================================================\r\n            # XY DISTANCE TO COLUMN\r\n            # =================================================\r\n\r\n            bbox_distance = (\r\n                point_to_bbox_xy_distance_mm(\r\n                    beam_end,\r\n                    bbox\r\n                )\r\n            )\r\n\r\n\r\n            if (\r\n                bbox_distance\r\n                > SUPPORT_TOLERANCE_MM\r\n            ):\r\n\r\n                continue\r\n\r\n\r\n            # =================================================\r\n            # COLUMN CENTER\r\n            # =================================================\r\n\r\n            center = XYZ(\r\n\r\n                (\r\n                    bbox.Min.X\r\n                    +\r\n                    bbox.Max.X\r\n                ) / 2.0,\r\n\r\n                (\r\n                    bbox.Min.Y\r\n                    +\r\n                    bbox.Max.Y\r\n                ) / 2.0,\r\n\r\n                beam_end.Z\r\n            )\r\n\r\n\r\n            center_distance = distance_mm(\r\n                beam_end,\r\n                center\r\n            )\r\n\r\n\r\n            candidates.append([\r\n                bbox_distance,\r\n                center_distance,\r\n                column,\r\n                bbox,\r\n                center\r\n            ])\r\n\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    if len(candidates) == 0:\r\n\r\n        return None\r\n\r\n\r\n    # Prefer beam endpoint actually inside/intersecting bbox,\r\n    # then nearest column center.\r\n\r\n    candidates.sort(\r\n        key=lambda x: (\r\n            x[0],\r\n            x[1]\r\n        )\r\n    )\r\n\r\n\r\n    selected = candidates[0]\r\n\r\n    column = selected[2]\r\n    bbox = selected[3]\r\n    center = selected[4]\r\n\r\n    center_distance = selected[1]\r\n\r\n\r\n    # ========================================================\r\n    # PROJECT COLUMN BBOX CORNERS ONTO BEAM DIRECTION\r\n    # ========================================================\r\n\r\n    corners = [\r\n\r\n        XYZ(\r\n            bbox.Min.X,\r\n            bbox.Min.Y,\r\n            beam_end.Z\r\n        ),\r\n\r\n        XYZ(\r\n            bbox.Min.X,\r\n            bbox.Max.Y,\r\n            beam_end.Z\r\n        ),\r\n\r\n        XYZ(\r\n            bbox.Max.X,\r\n            bbox.Min.Y,\r\n            beam_end.Z\r\n        ),\r\n\r\n        XYZ(\r\n            bbox.Max.X,\r\n            bbox.Max.Y,\r\n            beam_end.Z\r\n        )\r\n    ]\r\n\r\n\r\n    projections = []\r\n\r\n\r\n    for corner in corners:\r\n\r\n        delta = corner.Subtract(\r\n            beam_end\r\n        )\r\n\r\n        projection = delta.DotProduct(\r\n            beam_direction\r\n        )\r\n\r\n        projections.append(\r\n            projection\r\n        )\r\n\r\n\r\n    minimum = min(\r\n        projections\r\n    )\r\n\r\n    maximum = max(\r\n        projections\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # FACE ORDER\r\n    #\r\n    # START:\r\n    # beam runs toward +direction\r\n    # near face = positive/span side\r\n    # far face  = opposite side\r\n    #\r\n    # END:\r\n    # beam arrives from -direction\r\n    # near face = negative/span side\r\n    # far face  = positive/outside side\r\n    # ========================================================\r\n\r\n    if is_start:\r\n\r\n        near_offset = maximum\r\n        far_offset = minimum\r\n\r\n    else:\r\n\r\n        near_offset = minimum\r\n        far_offset = maximum\r\n\r\n\r\n    near_face = beam_end.Add(\r\n\r\n        beam_direction.Multiply(\r\n            near_offset\r\n        )\r\n    )\r\n\r\n\r\n    far_face = beam_end.Add(\r\n\r\n        beam_direction.Multiply(\r\n            far_offset\r\n        )\r\n    )\r\n\r\n\r\n    thickness_mm = abs(\r\n\r\n        internal_to_mm(\r\n            maximum - minimum\r\n        )\r\n    )\r\n\r\n\r\n    return [\r\n\r\n        column,             # 0\r\n        near_face,          # 1\r\n        far_face,           # 2\r\n        thickness_mm,       # 3\r\n        center_distance,    # 4\r\n        center              # 5\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# CONTINUATION BEAM DETECTION\r\n# ============================================================\r\n\r\ndef find_continuation_beams(\r\n    current_beam,\r\n    target_end,\r\n    current_direction\r\n):\r\n\r\n    current_id = id_value(\r\n        current_beam\r\n    )\r\n\r\n\r\n    current_dir_xy = unit_xy(\r\n        current_direction\r\n    )\r\n\r\n\r\n    if current_dir_xy is None:\r\n\r\n        return []\r\n\r\n\r\n    results = []\r\n\r\n\r\n    for candidate in all_beams:\r\n\r\n        candidate_id = id_value(\r\n            candidate\r\n        )\r\n\r\n\r\n        if candidate_id == current_id:\r\n\r\n            continue\r\n\r\n\r\n        curve = get_beam_curve(\r\n            candidate\r\n        )\r\n\r\n\r\n        if curve is None:\r\n\r\n            continue\r\n\r\n\r\n        try:\r\n\r\n            p0 = curve.GetEndPoint(\r\n                0\r\n            )\r\n\r\n            p1 = curve.GetEndPoint(\r\n                1\r\n            )\r\n\r\n        except:\r\n            continue\r\n\r\n\r\n        candidate_direction = (\r\n            p1.Subtract(\r\n                p0\r\n            )\r\n        )\r\n\r\n\r\n        candidate_dir_xy = unit_xy(\r\n            candidate_direction\r\n        )\r\n\r\n\r\n        if candidate_dir_xy is None:\r\n\r\n            continue\r\n\r\n\r\n        # ====================================================\r\n        # DIRECTION ALIGNMENT\r\n        # ====================================================\r\n\r\n        alignment = abs(\r\n\r\n            current_dir_xy.DotProduct(\r\n                candidate_dir_xy\r\n            )\r\n        )\r\n\r\n\r\n        if alignment < CONTINUITY_ALIGNMENT:\r\n\r\n            continue\r\n\r\n\r\n        # ====================================================\r\n        # ENDPOINT DISTANCE\r\n        # ====================================================\r\n\r\n        d0 = distance_mm(\r\n            target_end,\r\n            p0\r\n        )\r\n\r\n        d1 = distance_mm(\r\n            target_end,\r\n            p1\r\n        )\r\n\r\n\r\n        endpoint_distance = min(\r\n            d0,\r\n            d1\r\n        )\r\n\r\n\r\n        if (\r\n            endpoint_distance\r\n            >\r\n            CONTINUITY_END_TOLERANCE_MM\r\n        ):\r\n\r\n            continue\r\n\r\n\r\n        nearest = (\r\n            p0\r\n            if d0 <= d1\r\n            else p1\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # LATERAL OFFSET\r\n        # ====================================================\r\n\r\n        delta = nearest.Subtract(\r\n            target_end\r\n        )\r\n\r\n\r\n        axial_component = (\r\n            current_dir_xy.Multiply(\r\n\r\n                delta.DotProduct(\r\n                    current_dir_xy\r\n                )\r\n            )\r\n        )\r\n\r\n\r\n        lateral_component = (\r\n            delta.Subtract(\r\n                axial_component\r\n            )\r\n        )\r\n\r\n\r\n        lateral_mm = internal_to_mm(\r\n            lateral_component.GetLength()\r\n        )\r\n\r\n\r\n        if (\r\n            lateral_mm\r\n            >\r\n            CONTINUITY_LATERAL_TOLERANCE_MM\r\n        ):\r\n\r\n            continue\r\n\r\n\r\n        results.append(\r\n            candidate_id\r\n        )\r\n\r\n\r\n    return results\r\n\r\n\r\n# ============================================================\r\n# READ B01\r\n# ============================================================\r\n\r\nb01 = IN[0]\r\n\r\n\r\ntry:\r\n\r\n    b01_reports = as_list(\r\n        b01[0]\r\n    )\r\n\r\n\r\n    b01_ready = bool(\r\n        b01[7]\r\n    )\r\n\r\n\r\nexcept Exception as ex:\r\n\r\n    OUT = [\r\n\r\n        [],\r\n        0,\r\n        [],\r\n        0,\r\n        [],\r\n        [],\r\n        0,\r\n        False,\r\n\r\n        \"INVALID B01 INPUT: {}\".format(\r\n            str(ex)\r\n        )\r\n    ]\r\n\r\n    raise Exception(\r\n        \"Invalid B01 input.\"\r\n    )\r\n\r\n\r\n# ============================================================\r\n# PROCESS BEAMS\r\n# ============================================================\r\n\r\nreports = []\r\n\r\nready_beams = []\r\nready_ids = []\r\n\r\nfailed_reports = []\r\n\r\n\r\nfor b01_report in b01_reports:\r\n\r\n    errors = []\r\n\r\n\r\n    try:\r\n\r\n        beam_id = b01_report[0]\r\n\r\n        b01_beam_ready = bool(\r\n            b01_report[1]\r\n        )\r\n\r\n        beam = unwrap(\r\n            b01_report[9]\r\n        )\r\n\r\n\r\n    except Exception as ex:\r\n\r\n        failure = [\r\n\r\n            None,\r\n            False,\r\n            \"FAILED\",\r\n\r\n            [\r\n                \"Invalid B01 report: {}\".format(\r\n                    str(ex)\r\n                )\r\n            ],\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            False,\r\n            False,\r\n\r\n            [],\r\n            [],\r\n\r\n            None,\r\n\r\n            b01_report\r\n        ]\r\n\r\n\r\n        reports.append(\r\n            failure\r\n        )\r\n\r\n        failed_reports.append(\r\n            failure\r\n        )\r\n\r\n        continue\r\n\r\n\r\n    # ========================================================\r\n    # B01 READY CHECK\r\n    # ========================================================\r\n\r\n    if not b01_beam_ready:\r\n\r\n        failure = [\r\n\r\n            beam_id,\r\n            False,\r\n            \"FAILED\",\r\n\r\n            [\r\n                \"Beam failed B01 preflight.\"\r\n            ],\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            None,\r\n            None,\r\n\r\n            False,\r\n            False,\r\n\r\n            [],\r\n            [],\r\n\r\n            beam,\r\n\r\n            b01_report\r\n        ]\r\n\r\n\r\n        reports.append(\r\n            failure\r\n        )\r\n\r\n        failed_reports.append(\r\n            failure\r\n        )\r\n\r\n        continue\r\n\r\n\r\n    # ========================================================\r\n    # BEAM GEOMETRY\r\n    # ========================================================\r\n\r\n    curve = get_beam_curve(\r\n        beam\r\n    )\r\n\r\n\r\n    if curve is None:\r\n\r\n        errors.append(\r\n            \"Beam LocationCurve not found.\"\r\n        )\r\n\r\n\r\n        p0 = None\r\n        p1 = None\r\n        direction = None\r\n\r\n\r\n    else:\r\n\r\n        try:\r\n\r\n            p0 = curve.GetEndPoint(\r\n                0\r\n            )\r\n\r\n            p1 = curve.GetEndPoint(\r\n                1\r\n            )\r\n\r\n\r\n            direction = (\r\n\r\n                p1.Subtract(\r\n                    p0\r\n                )\r\n                .Normalize()\r\n            )\r\n\r\n\r\n        except:\r\n\r\n            p0 = None\r\n            p1 = None\r\n            direction = None\r\n\r\n\r\n            errors.append(\r\n                \"Could not determine beam endpoints.\"\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # SUPPORTS\r\n    # ========================================================\r\n\r\n    start_support = None\r\n    end_support = None\r\n\r\n\r\n    if (\r\n        p0 is not None\r\n        and\r\n        direction is not None\r\n    ):\r\n\r\n        start_support = detect_column_support(\r\n\r\n            p0,\r\n            direction,\r\n            True\r\n        )\r\n\r\n\r\n    if (\r\n        p1 is not None\r\n        and\r\n        direction is not None\r\n    ):\r\n\r\n        end_support = detect_column_support(\r\n\r\n            p1,\r\n            direction,\r\n            False\r\n        )\r\n\r\n\r\n    if start_support is None:\r\n\r\n        errors.append(\r\n            \"Start column support not found.\"\r\n        )\r\n\r\n\r\n    if end_support is None:\r\n\r\n        errors.append(\r\n            \"End column support not found.\"\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # START DATA\r\n    # ========================================================\r\n\r\n    if start_support is not None:\r\n\r\n        start_column_id = id_value(\r\n            start_support[0]\r\n        )\r\n\r\n        start_near = xyz_to_mm(\r\n            start_support[1]\r\n        )\r\n\r\n        start_far = xyz_to_mm(\r\n            start_support[2]\r\n        )\r\n\r\n        start_thickness = (\r\n            start_support[3]\r\n        )\r\n\r\n        start_center_distance = (\r\n            start_support[4]\r\n        )\r\n\r\n\r\n    else:\r\n\r\n        start_column_id = None\r\n\r\n        start_near = None\r\n        start_far = None\r\n\r\n        start_thickness = None\r\n        start_center_distance = None\r\n\r\n\r\n    # ========================================================\r\n    # END DATA\r\n    # ========================================================\r\n\r\n    if end_support is not None:\r\n\r\n        end_column_id = id_value(\r\n            end_support[0]\r\n        )\r\n\r\n        end_near = xyz_to_mm(\r\n            end_support[1]\r\n        )\r\n\r\n        end_far = xyz_to_mm(\r\n            end_support[2]\r\n        )\r\n\r\n        end_thickness = (\r\n            end_support[3]\r\n        )\r\n\r\n        end_center_distance = (\r\n            end_support[4]\r\n        )\r\n\r\n\r\n    else:\r\n\r\n        end_column_id = None\r\n\r\n        end_near = None\r\n        end_far = None\r\n\r\n        end_thickness = None\r\n        end_center_distance = None\r\n\r\n\r\n    # ========================================================\r\n    # CONTINUITY\r\n    # ========================================================\r\n\r\n    if (\r\n        p0 is not None\r\n        and\r\n        direction is not None\r\n    ):\r\n\r\n        start_continuation_ids = (\r\n            find_continuation_beams(\r\n\r\n                beam,\r\n                p0,\r\n                direction\r\n            )\r\n        )\r\n\r\n    else:\r\n\r\n        start_continuation_ids = []\r\n\r\n\r\n    if (\r\n        p1 is not None\r\n        and\r\n        direction is not None\r\n    ):\r\n\r\n        end_continuation_ids = (\r\n            find_continuation_beams(\r\n\r\n                beam,\r\n                p1,\r\n                direction\r\n            )\r\n        )\r\n\r\n    else:\r\n\r\n        end_continuation_ids = []\r\n\r\n\r\n    start_continuous = (\r\n        len(start_continuation_ids) > 0\r\n    )\r\n\r\n\r\n    end_continuous = (\r\n        len(end_continuation_ids) > 0\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # RESULT\r\n    # ========================================================\r\n\r\n    ready = (\r\n        len(errors) == 0\r\n    )\r\n\r\n\r\n    status = (\r\n        \"READY\"\r\n        if ready\r\n        else \"FAILED\"\r\n    )\r\n\r\n\r\n    report = [\r\n\r\n        beam_id,                       # 0\r\n\r\n        ready,                         # 1\r\n        status,                        # 2\r\n\r\n        errors,                        # 3\r\n\r\n        start_column_id,               # 4\r\n        end_column_id,                 # 5\r\n\r\n        start_near,                    # 6\r\n        start_far,                     # 7\r\n\r\n        end_near,                      # 8\r\n        end_far,                       # 9\r\n\r\n        start_thickness,               # 10\r\n        end_thickness,                 # 11\r\n\r\n        start_center_distance,         # 12\r\n        end_center_distance,           # 13\r\n\r\n        start_continuous,              # 14\r\n        end_continuous,                # 15\r\n\r\n        start_continuation_ids,        # 16\r\n        end_continuation_ids,          # 17\r\n\r\n        beam,                          # 18\r\n\r\n        b01_report                     # 19\r\n    ]\r\n\r\n\r\n    reports.append(\r\n        report\r\n    )\r\n\r\n\r\n    if ready:\r\n\r\n        ready_beams.append(\r\n            beam\r\n        )\r\n\r\n        ready_ids.append(\r\n            beam_id\r\n        )\r\n\r\n\r\n    else:\r\n\r\n        failed_reports.append(\r\n            report\r\n        )\r\n\r\n\r\n# ============================================================\r\n# FINAL STATUS\r\n# ============================================================\r\n\r\noverall_ready = (\r\n\r\n    b01_ready\r\n\r\n    and\r\n\r\n    len(reports) > 0\r\n\r\n    and\r\n\r\n    len(failed_reports) == 0\r\n)\r\n\r\n\r\nif overall_ready:\r\n\r\n    final_status = (\r\n        \"B02 SUPPORT/CONTINUITY COMPLETE\"\r\n    )\r\n\r\nelse:\r\n\r\n    final_status = (\r\n        \"B02 SUPPORT/CONTINUITY FAILED\"\r\n    )\r\n\r\n\r\nOUT = [\r\n\r\n    reports,                       # 0\r\n\r\n    len(b01_reports),              # 1\r\n\r\n    ready_beams,                   # 2\r\n\r\n    len(ready_beams),              # 3\r\n\r\n    ready_ids,                     # 4\r\n\r\n    failed_reports,                # 5\r\n\r\n    len(failed_reports),           # 6\r\n\r\n    overall_ready,                 # 7\r\n\r\n    final_status                   # 8\r\n]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "c79a1f964ab843c1989c2d4272e9e64c",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "5e9dcca18efd458384d1301e331abcea",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "9c000d5a2ec743c0b6ccac2e865fd6d9",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\nimport math\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nclr.AddReference(\"RevitServices\")\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\nfrom System.Collections.Generic import List\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ============================================================\r\n# B03 — SELECTED BEAM TYPE AUTO-REBAR GENERATOR\r\n#\r\n# IN[0] = ENTIRE B02 OUTPUT\r\n#\r\n# ------------------------------------------------------------\r\n# B02 PER-BEAM REPORT\r\n#\r\n# [0]  Beam ID\r\n# [1]  Ready\r\n# [2]  Status\r\n# [3]  Errors\r\n#\r\n# [4]  Start Column ID\r\n# [5]  End Column ID\r\n#\r\n# [6]  Start Near Face\r\n# [7]  Start Far Face\r\n#\r\n# [8]  End Near Face\r\n# [9]  End Far Face\r\n#\r\n# [10] Start Support Thickness\r\n# [11] End Support Thickness\r\n#\r\n# [12] Start Center Distance\r\n# [13] End Center Distance\r\n#\r\n# [14] Start Continuous\r\n# [15] End Continuous\r\n#\r\n# [16] Start Continuation IDs\r\n# [17] End Continuation IDs\r\n#\r\n# [18] Beam\r\n# [19] Original B01 Report\r\n#\r\n#\r\n# ------------------------------------------------------------\r\n# B01 PER-BEAM REPORT\r\n#\r\n# [0] Beam ID\r\n# [1] Ready\r\n# [2] Status\r\n# [3] Errors\r\n# [4] Warnings\r\n#\r\n# [5] [Length, Width, Depth]\r\n#\r\n# [6] [\r\n#       TopQty,\r\n#       BottomQty,\r\n#       TopDia,\r\n#       BottomDia\r\n#     ]\r\n#\r\n# [7] [\r\n#       ContinuousQty,\r\n#       ExtraQty,\r\n#       SupportExtraLayer,\r\n#       MidspanExtraLayer\r\n#     ]\r\n#\r\n# [8] [\r\n#       StirrupDia,\r\n#       Cover,\r\n#       EndSpacing,\r\n#       MidSpacing\r\n#     ]\r\n#\r\n# [9] Beam\r\n#\r\n#\r\n# ------------------------------------------------------------\r\n# REBAR QUANTITY RULE\r\n#\r\n# Example:\r\n#\r\n# SUPPORT:\r\n#\r\n# TopQty    = 6\r\n# BottomQty = 4\r\n#\r\n# ContinuousQty = 4\r\n# ExtraQty      = 2\r\n#\r\n# Support:\r\n# TOP    = 6\r\n# BOTTOM = 4\r\n#\r\n# Midspan:\r\n# TOP    = 4\r\n# BOTTOM = 6\r\n#\r\n#\r\n# If BottomQty > TopQty, the logic reverses automatically.\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# HELPERS\r\n# ============================================================\r\n\r\ndef as_list(value):\r\n\r\n    if value is None:\r\n        return []\r\n\r\n    if isinstance(value, list):\r\n        return value\r\n\r\n    try:\r\n        return list(value)\r\n    except:\r\n        return [value]\r\n\r\n\r\ndef unwrap(element):\r\n\r\n    try:\r\n        return UnwrapElement(element)\r\n    except:\r\n        return element\r\n\r\n\r\ndef element_id_value(element):\r\n\r\n    if element is None:\r\n        return None\r\n\r\n    try:\r\n        return int(element.Id.Value)\r\n    except:\r\n        pass\r\n\r\n    try:\r\n        return int(element.Id.IntegerValue)\r\n    except:\r\n        return None\r\n\r\n\r\n# ============================================================\r\n# UNITS\r\n# ============================================================\r\n\r\ndef mm_to_internal(value):\r\n\r\n    return UnitUtils.ConvertToInternalUnits(\r\n        float(value),\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef internal_to_mm(value):\r\n\r\n    return UnitUtils.ConvertFromInternalUnits(\r\n        value,\r\n        UnitTypeId.Millimeters\r\n    )\r\n\r\n\r\ndef xyz_to_mm(point):\r\n\r\n    return [\r\n        internal_to_mm(point.X),\r\n        internal_to_mm(point.Y),\r\n        internal_to_mm(point.Z)\r\n    ]\r\n\r\n\r\ndef mm_to_xyz(point):\r\n\r\n    return XYZ(\r\n        mm_to_internal(point[0]),\r\n        mm_to_internal(point[1]),\r\n        mm_to_internal(point[2])\r\n    )\r\n\r\n\r\n# ============================================================\r\n# VECTOR / POINT HELPERS\r\n# ============================================================\r\n\r\ndef move_point(\r\n    point,\r\n    direction,\r\n    distance\r\n):\r\n\r\n    return [\r\n\r\n        point[0]\r\n        + direction[0] * distance,\r\n\r\n        point[1]\r\n        + direction[1] * distance,\r\n\r\n        point[2]\r\n        + direction[2] * distance\r\n    ]\r\n\r\n\r\ndef midpoint(\r\n    p1,\r\n    p2\r\n):\r\n\r\n    return [\r\n\r\n        (p1[0] + p2[0]) / 2.0,\r\n\r\n        (p1[1] + p2[1]) / 2.0,\r\n\r\n        (p1[2] + p2[2]) / 2.0\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# COMMENTS\r\n# ============================================================\r\n\r\ndef set_comments(\r\n    element,\r\n    text\r\n):\r\n\r\n    try:\r\n\r\n        p = element.get_Parameter(\r\n            BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS\r\n        )\r\n\r\n        if (\r\n            p is not None\r\n            and\r\n            not p.IsReadOnly\r\n        ):\r\n\r\n            p.Set(\r\n                text\r\n            )\r\n\r\n            return\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n    try:\r\n\r\n        p = element.LookupParameter(\r\n            \"Comments\"\r\n        )\r\n\r\n        if (\r\n            p is not None\r\n            and\r\n            not p.IsReadOnly\r\n        ):\r\n\r\n            p.Set(\r\n                text\r\n            )\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n# ============================================================\r\n# FIND REBAR TYPE BY DIAMETER\r\n# ============================================================\r\n\r\ndef get_bar_diameter(\r\n    bar_type\r\n):\r\n\r\n    try:\r\n        return bar_type.BarDiameter\r\n    except:\r\n        pass\r\n\r\n\r\n    try:\r\n\r\n        p = bar_type.get_Parameter(\r\n            BuiltInParameter.REBAR_BAR_DIAMETER\r\n        )\r\n\r\n        if p is not None:\r\n            return p.AsDouble()\r\n\r\n    except:\r\n        pass\r\n\r\n\r\n    return None\r\n\r\n\r\ndef find_bar_type(\r\n    diameter_mm\r\n):\r\n\r\n    target = mm_to_internal(\r\n        diameter_mm\r\n    )\r\n\r\n    tolerance = mm_to_internal(\r\n        0.5\r\n    )\r\n\r\n\r\n    bar_types = (\r\n        FilteredElementCollector(doc)\r\n        .OfClass(RebarBarType)\r\n        .ToElements()\r\n    )\r\n\r\n\r\n    for bar_type in bar_types:\r\n\r\n        diameter = get_bar_diameter(\r\n            bar_type\r\n        )\r\n\r\n        if diameter is None:\r\n            continue\r\n\r\n\r\n        if abs(\r\n            diameter - target\r\n        ) <= tolerance:\r\n\r\n            return bar_type\r\n\r\n\r\n    return None\r\n\r\n\r\n# ============================================================\r\n# FIND 135 DEGREE HOOK\r\n# ============================================================\r\n\r\ndef find_135_hook():\r\n\r\n    target = math.radians(\r\n        135.0\r\n    )\r\n\r\n    tolerance = math.radians(\r\n        0.5\r\n    )\r\n\r\n\r\n    hook_types = (\r\n        FilteredElementCollector(doc)\r\n        .OfClass(RebarHookType)\r\n        .ToElements()\r\n    )\r\n\r\n\r\n    for hook in hook_types:\r\n\r\n        try:\r\n\r\n            if abs(\r\n                hook.HookAngle - target\r\n            ) <= tolerance:\r\n\r\n                return hook\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    return None\r\n\r\n\r\nhook_135 = find_135_hook()\r\n\r\n\r\n# ============================================================\r\n# DELETE EXISTING REBAR HOSTED BY BEAM\r\n#\r\n# IMPORTANT:\r\n# Only reinforcement hosted by the selected beam is removed.\r\n#\r\n# It does NOT clear unrelated project reinforcement.\r\n# ============================================================\r\n\r\ndef clear_hosted_rebar(\r\n    beam\r\n):\r\n\r\n    rebar_elements = (\r\n        FilteredElementCollector(doc)\r\n        .OfClass(Rebar)\r\n        .WhereElementIsNotElementType()\r\n        .ToElements()\r\n    )\r\n\r\n\r\n    ids = []\r\n\r\n\r\n    for rebar in rebar_elements:\r\n\r\n        try:\r\n\r\n            if rebar.GetHostId() == beam.Id:\r\n\r\n                ids.append(\r\n                    rebar.Id\r\n                )\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    count = len(\r\n        ids\r\n    )\r\n\r\n\r\n    for rid in ids:\r\n\r\n        doc.Delete(\r\n            rid\r\n        )\r\n\r\n\r\n    return count\r\n\r\n\r\n# ============================================================\r\n# TRANSVERSE BAR POSITIONING\r\n#\r\n# Maximum support/midspan quantity defines available positions.\r\n#\r\n# Example:\r\n#\r\n# 6 / 4\r\n#\r\n# Six physical positions are generated.\r\n#\r\n# Four become continuous.\r\n# Two become extra.\r\n#\r\n# This prevents continuous and extra bars occupying\r\n# exactly the same transverse location.\r\n# ============================================================\r\n\r\ndef evenly_spaced_offsets(\r\n    quantity,\r\n    beam_width,\r\n    centerline_cover\r\n):\r\n\r\n    if quantity <= 0:\r\n\r\n        return []\r\n\r\n\r\n    usable_width = (\r\n\r\n        beam_width\r\n        - 2.0 * centerline_cover\r\n    )\r\n\r\n\r\n    if usable_width <= 0:\r\n\r\n        raise Exception(\r\n            \"No usable width remains for longitudinal reinforcement.\"\r\n        )\r\n\r\n\r\n    if quantity == 1:\r\n\r\n        return [\r\n            0.0\r\n        ]\r\n\r\n\r\n    spacing = (\r\n\r\n        usable_width\r\n        /\r\n        float(\r\n            quantity - 1\r\n        )\r\n    )\r\n\r\n\r\n    offsets = []\r\n\r\n\r\n    for i in range(\r\n        quantity\r\n    ):\r\n\r\n        offsets.append(\r\n\r\n            -usable_width / 2.0\r\n            + spacing * i\r\n        )\r\n\r\n\r\n    return offsets\r\n\r\n\r\ndef get_bar_offsets(\r\n    top_qty,\r\n    bottom_qty,\r\n    beam_width,\r\n    centerline_cover\r\n):\r\n\r\n    maximum_qty = max(\r\n        top_qty,\r\n        bottom_qty\r\n    )\r\n\r\n\r\n    continuous_qty = min(\r\n        top_qty,\r\n        bottom_qty\r\n    )\r\n\r\n\r\n    all_offsets = evenly_spaced_offsets(\r\n\r\n        maximum_qty,\r\n        beam_width,\r\n        centerline_cover\r\n    )\r\n\r\n\r\n    if maximum_qty == continuous_qty:\r\n\r\n        return (\r\n            list(all_offsets),\r\n            []\r\n        )\r\n\r\n\r\n    continuous_indices = []\r\n\r\n\r\n    # ========================================================\r\n    # ONE CONTINUOUS POSITION\r\n    # ========================================================\r\n\r\n    if continuous_qty == 1:\r\n\r\n        continuous_indices = [\r\n\r\n            int(\r\n                round(\r\n                    (\r\n                        maximum_qty - 1\r\n                    ) / 2.0\r\n                )\r\n            )\r\n        ]\r\n\r\n\r\n    # ========================================================\r\n    # DISTRIBUTE CONTINUOUS BARS ACROSS AVAILABLE POSITIONS\r\n    # ========================================================\r\n\r\n    else:\r\n\r\n        for i in range(\r\n            continuous_qty\r\n        ):\r\n\r\n            raw = (\r\n\r\n                float(i)\r\n                *\r\n                float(\r\n                    maximum_qty - 1\r\n                )\r\n                /\r\n                float(\r\n                    continuous_qty - 1\r\n                )\r\n            )\r\n\r\n\r\n            index = int(\r\n                round(raw)\r\n            )\r\n\r\n\r\n            if index not in continuous_indices:\r\n\r\n                continuous_indices.append(\r\n                    index\r\n                )\r\n\r\n\r\n    # ========================================================\r\n    # ROUNDING FALLBACK\r\n    # ========================================================\r\n\r\n    if len(\r\n        continuous_indices\r\n    ) < continuous_qty:\r\n\r\n        for i in range(\r\n            maximum_qty\r\n        ):\r\n\r\n            if i not in continuous_indices:\r\n\r\n                continuous_indices.append(\r\n                    i\r\n                )\r\n\r\n\r\n            if len(\r\n                continuous_indices\r\n            ) >= continuous_qty:\r\n\r\n                break\r\n\r\n\r\n    continuous_indices = sorted(\r\n        continuous_indices\r\n    )\r\n\r\n\r\n    continuous_offsets = []\r\n    extra_offsets = []\r\n\r\n\r\n    for i, offset in enumerate(\r\n        all_offsets\r\n    ):\r\n\r\n        if i in continuous_indices:\r\n\r\n            continuous_offsets.append(\r\n                offset\r\n            )\r\n\r\n        else:\r\n\r\n            extra_offsets.append(\r\n                offset\r\n            )\r\n\r\n\r\n    return (\r\n        continuous_offsets,\r\n        extra_offsets\r\n    )\r\n\r\n\r\n# ============================================================\r\n# STANDARD REBAR CREATION\r\n# ============================================================\r\n\r\ndef create_standard_rebar(\r\n    beam,\r\n    bar_type,\r\n    normal,\r\n    points\r\n):\r\n\r\n    curves = List[Curve]()\r\n\r\n\r\n    for i in range(\r\n        len(points) - 1\r\n    ):\r\n\r\n        p1 = mm_to_xyz(\r\n            points[i]\r\n        )\r\n\r\n        p2 = mm_to_xyz(\r\n            points[i + 1]\r\n        )\r\n\r\n\r\n        if p1.DistanceTo(p2) <= 0.000001:\r\n\r\n            continue\r\n\r\n\r\n        curves.Add(\r\n\r\n            Line.CreateBound(\r\n                p1,\r\n                p2\r\n            )\r\n        )\r\n\r\n\r\n    if curves.Count == 0:\r\n\r\n        raise Exception(\r\n            \"No valid longitudinal rebar curves.\"\r\n        )\r\n\r\n\r\n    rebar = Rebar.CreateFromCurves(\r\n\r\n        doc,\r\n\r\n        RebarStyle.Standard,\r\n\r\n        bar_type,\r\n\r\n        None,\r\n        None,\r\n\r\n        beam,\r\n\r\n        normal,\r\n\r\n        curves,\r\n\r\n        RebarHookOrientation.Left,\r\n        RebarHookOrientation.Right,\r\n\r\n        False,\r\n        True\r\n    )\r\n\r\n\r\n    if rebar is None:\r\n\r\n        raise Exception(\r\n            \"Revit failed to create longitudinal reinforcement.\"\r\n        )\r\n\r\n\r\n    return rebar\r\n\r\n\r\n# ============================================================\r\n# CONTINUOUS BAR GEOMETRY\r\n#\r\n# Exterior support:\r\n#\r\n# TOP    = vertical leg downward\r\n# BOTTOM = vertical leg upward\r\n#\r\n# Leg = 12db\r\n#\r\n# Continuous support:\r\n# no vertical hook.\r\n# ============================================================\r\n\r\ndef continuous_bar_points(\r\n    start_axis,\r\n    end_axis,\r\n    transverse_offset,\r\n    elevation,\r\n    local_y,\r\n    is_top,\r\n    start_hook,\r\n    end_hook,\r\n    hook_leg\r\n):\r\n\r\n    start = [\r\n\r\n        start_axis[0]\r\n        + local_y[0] * transverse_offset,\r\n\r\n        start_axis[1]\r\n        + local_y[1] * transverse_offset,\r\n\r\n        elevation\r\n    ]\r\n\r\n\r\n    end = [\r\n\r\n        end_axis[0]\r\n        + local_y[0] * transverse_offset,\r\n\r\n        end_axis[1]\r\n        + local_y[1] * transverse_offset,\r\n\r\n        elevation\r\n    ]\r\n\r\n\r\n    points = []\r\n\r\n\r\n    # ========================================================\r\n    # START HOOK\r\n    # ========================================================\r\n\r\n    if start_hook:\r\n\r\n        if is_top:\r\n\r\n            hook_point = [\r\n\r\n                start[0],\r\n                start[1],\r\n\r\n                start[2]\r\n                - hook_leg\r\n            ]\r\n\r\n        else:\r\n\r\n            hook_point = [\r\n\r\n                start[0],\r\n                start[1],\r\n\r\n                start[2]\r\n                + hook_leg\r\n            ]\r\n\r\n\r\n        points.append(\r\n            hook_point\r\n        )\r\n\r\n\r\n    points.append(\r\n        start\r\n    )\r\n\r\n\r\n    points.append(\r\n        end\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # END HOOK\r\n    # ========================================================\r\n\r\n    if end_hook:\r\n\r\n        if is_top:\r\n\r\n            hook_point = [\r\n\r\n                end[0],\r\n                end[1],\r\n\r\n                end[2]\r\n                - hook_leg\r\n            ]\r\n\r\n        else:\r\n\r\n            hook_point = [\r\n\r\n                end[0],\r\n                end[1],\r\n\r\n                end[2]\r\n                + hook_leg\r\n            ]\r\n\r\n\r\n        points.append(\r\n            hook_point\r\n        )\r\n\r\n\r\n    return points\r\n\r\n\r\n# ============================================================\r\n# SUPPORT EXTRA BAR\r\n#\r\n# START:\r\n#\r\n# support anchor → L/4\r\n#\r\n# END:\r\n#\r\n# 3L/4 → support anchor\r\n#\r\n# Exterior support gets 12db bend.\r\n# Continuous support terminates at support centerline.\r\n# ============================================================\r\n\r\ndef support_extra_points(\r\n    support_anchor,\r\n    cutoff,\r\n    transverse_offset,\r\n    elevation,\r\n    local_y,\r\n    is_top,\r\n    hook_required,\r\n    hook_leg,\r\n    is_start\r\n):\r\n\r\n    anchor = [\r\n\r\n        support_anchor[0]\r\n        + local_y[0] * transverse_offset,\r\n\r\n        support_anchor[1]\r\n        + local_y[1] * transverse_offset,\r\n\r\n        elevation\r\n    ]\r\n\r\n\r\n    cutoff_point = [\r\n\r\n        cutoff[0]\r\n        + local_y[0] * transverse_offset,\r\n\r\n        cutoff[1]\r\n        + local_y[1] * transverse_offset,\r\n\r\n        elevation\r\n    ]\r\n\r\n\r\n    if is_top:\r\n\r\n        hook_point = [\r\n\r\n            anchor[0],\r\n            anchor[1],\r\n\r\n            anchor[2]\r\n            - hook_leg\r\n        ]\r\n\r\n    else:\r\n\r\n        hook_point = [\r\n\r\n            anchor[0],\r\n            anchor[1],\r\n\r\n            anchor[2]\r\n            + hook_leg\r\n        ]\r\n\r\n\r\n    if is_start:\r\n\r\n        if hook_required:\r\n\r\n            return [\r\n                hook_point,\r\n                anchor,\r\n                cutoff_point\r\n            ]\r\n\r\n        else:\r\n\r\n            return [\r\n                anchor,\r\n                cutoff_point\r\n            ]\r\n\r\n\r\n    else:\r\n\r\n        if hook_required:\r\n\r\n            return [\r\n                cutoff_point,\r\n                anchor,\r\n                hook_point\r\n            ]\r\n\r\n        else:\r\n\r\n            return [\r\n                cutoff_point,\r\n                anchor\r\n            ]\r\n\r\n\r\n# ============================================================\r\n# MIDSPAN EXTRA BAR\r\n#\r\n# L/4 → 3L/4\r\n# ============================================================\r\n\r\ndef midspan_extra_points(\r\n    quarter,\r\n    three_quarter,\r\n    transverse_offset,\r\n    elevation,\r\n    local_y\r\n):\r\n\r\n    return [\r\n\r\n        [\r\n            quarter[0]\r\n            + local_y[0] * transverse_offset,\r\n\r\n            quarter[1]\r\n            + local_y[1] * transverse_offset,\r\n\r\n            elevation\r\n        ],\r\n\r\n        [\r\n            three_quarter[0]\r\n            + local_y[0] * transverse_offset,\r\n\r\n            three_quarter[1]\r\n            + local_y[1] * transverse_offset,\r\n\r\n            elevation\r\n        ]\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# STIRRUP CURVES\r\n# ============================================================\r\n\r\ndef stirrup_curve_list(\r\n    points\r\n):\r\n\r\n    curves = List[Curve]()\r\n\r\n\r\n    for i in range(\r\n        len(points) - 1\r\n    ):\r\n\r\n        curves.Add(\r\n\r\n            Line.CreateBound(\r\n\r\n                mm_to_xyz(\r\n                    points[i]\r\n                ),\r\n\r\n                mm_to_xyz(\r\n                    points[i + 1]\r\n                )\r\n            )\r\n        )\r\n\r\n\r\n    return curves\r\n\r\n\r\n# ============================================================\r\n# CREATE STIRRUP ZONE\r\n# ============================================================\r\n\r\ndef create_stirrup_zone(\r\n    beam,\r\n    stirrup_type,\r\n    beam_direction_xyz,\r\n    beam_direction,\r\n    base_shape,\r\n    base_location,\r\n    zone_start,\r\n    zone_length,\r\n    spacing,\r\n    tag\r\n):\r\n\r\n    if zone_length <= 0:\r\n\r\n        return None\r\n\r\n\r\n    shift = (\r\n\r\n        zone_start\r\n        - base_location\r\n    )\r\n\r\n\r\n    moved_shape = []\r\n\r\n\r\n    for point in base_shape:\r\n\r\n        moved_shape.append([\r\n\r\n            point[0]\r\n            + beam_direction[0] * shift,\r\n\r\n            point[1]\r\n            + beam_direction[1] * shift,\r\n\r\n            point[2]\r\n            + beam_direction[2] * shift\r\n        ])\r\n\r\n\r\n    curves = stirrup_curve_list(\r\n        moved_shape\r\n    )\r\n\r\n\r\n    rebar = Rebar.CreateFromCurves(\r\n\r\n        doc,\r\n\r\n        RebarStyle.StirrupTie,\r\n\r\n        stirrup_type,\r\n\r\n        hook_135,\r\n        hook_135,\r\n\r\n        beam,\r\n\r\n        beam_direction_xyz,\r\n\r\n        curves,\r\n\r\n        RebarHookOrientation.Left,\r\n        RebarHookOrientation.Right,\r\n\r\n        True,\r\n        True\r\n    )\r\n\r\n\r\n    if rebar is None:\r\n\r\n        raise Exception(\r\n            \"Revit failed to create stirrup reinforcement.\"\r\n        )\r\n\r\n\r\n    accessor = (\r\n        rebar.GetShapeDrivenAccessor()\r\n    )\r\n\r\n\r\n    accessor.SetLayoutAsMaximumSpacing(\r\n\r\n        mm_to_internal(\r\n            spacing\r\n        ),\r\n\r\n        mm_to_internal(\r\n            zone_length\r\n        ),\r\n\r\n        True,\r\n        True,\r\n        True\r\n    )\r\n\r\n\r\n    set_comments(\r\n        rebar,\r\n        tag\r\n    )\r\n\r\n\r\n    return rebar\r\n\r\n\r\n# ============================================================\r\n# PROCESS ONE BEAM\r\n# ============================================================\r\n\r\ndef process_beam(\r\n    b02_report\r\n):\r\n\r\n    # ========================================================\r\n    # B02 DATA\r\n    # ========================================================\r\n\r\n    beam_id = b02_report[0]\r\n\r\n\r\n    beam = unwrap(\r\n        b02_report[18]\r\n    )\r\n\r\n\r\n    b01_report = b02_report[19]\r\n\r\n\r\n    # ========================================================\r\n    # CONFIG FROM B01\r\n    # ========================================================\r\n\r\n    length_mm = float(\r\n        b01_report[5][0]\r\n    )\r\n\r\n    beam_width = float(\r\n        b01_report[5][1]\r\n    )\r\n\r\n    beam_depth = float(\r\n        b01_report[5][2]\r\n    )\r\n\r\n\r\n    top_qty = int(\r\n        b01_report[6][0]\r\n    )\r\n\r\n    bottom_qty = int(\r\n        b01_report[6][1]\r\n    )\r\n\r\n    top_dia = float(\r\n        b01_report[6][2]\r\n    )\r\n\r\n    bottom_dia = float(\r\n        b01_report[6][3]\r\n    )\r\n\r\n\r\n    continuous_qty = int(\r\n        b01_report[7][0]\r\n    )\r\n\r\n    extra_qty = int(\r\n        b01_report[7][1]\r\n    )\r\n\r\n    support_extra_layer = str(\r\n        b01_report[7][2]\r\n    )\r\n\r\n    midspan_extra_layer = str(\r\n        b01_report[7][3]\r\n    )\r\n\r\n\r\n    stirrup_dia = float(\r\n        b01_report[8][0]\r\n    )\r\n\r\n    cover = float(\r\n        b01_report[8][1]\r\n    )\r\n\r\n    end_spacing = float(\r\n        b01_report[8][2]\r\n    )\r\n\r\n    mid_spacing = float(\r\n        b01_report[8][3]\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # B02 SUPPORT INFORMATION\r\n    # ========================================================\r\n\r\n    start_near = b02_report[6]\r\n    start_far = b02_report[7]\r\n\r\n    end_near = b02_report[8]\r\n    end_far = b02_report[9]\r\n\r\n\r\n    start_continuous = bool(\r\n        b02_report[14]\r\n    )\r\n\r\n    end_continuous = bool(\r\n        b02_report[15]\r\n    )\r\n\r\n\r\n    start_hook_required = (\r\n        not start_continuous\r\n    )\r\n\r\n    end_hook_required = (\r\n        not end_continuous\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # VALIDATION\r\n    # ========================================================\r\n\r\n    if beam is None:\r\n\r\n        raise Exception(\r\n            \"Beam could not be resolved.\"\r\n        )\r\n\r\n\r\n    if start_near is None or start_far is None:\r\n\r\n        raise Exception(\r\n            \"Start support geometry is invalid.\"\r\n        )\r\n\r\n\r\n    if end_near is None or end_far is None:\r\n\r\n        raise Exception(\r\n            \"End support geometry is invalid.\"\r\n        )\r\n\r\n\r\n    if top_qty < 2:\r\n\r\n        raise Exception(\r\n            \"TopQty must be at least 2.\"\r\n        )\r\n\r\n\r\n    if bottom_qty < 2:\r\n\r\n        raise Exception(\r\n            \"BottomQty must be at least 2.\"\r\n        )\r\n\r\n\r\n    if abs(\r\n        top_dia - bottom_dia\r\n    ) > 0.5:\r\n\r\n        raise Exception(\r\n            \"Current B03 requires TopDia and BottomDia to match.\"\r\n        )\r\n\r\n\r\n    if hook_135 is None:\r\n\r\n        raise Exception(\r\n            \"No 135 degree RebarHookType found.\"\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # BAR TYPES\r\n    # ========================================================\r\n\r\n    main_dia = top_dia\r\n\r\n\r\n    main_type = find_bar_type(\r\n        main_dia\r\n    )\r\n\r\n\r\n    stirrup_type = find_bar_type(\r\n        stirrup_dia\r\n    )\r\n\r\n\r\n    if main_type is None:\r\n\r\n        raise Exception(\r\n\r\n            \"No RebarBarType found for {:.0f}mm.\"\r\n            .format(\r\n                main_dia\r\n            )\r\n        )\r\n\r\n\r\n    if stirrup_type is None:\r\n\r\n        raise Exception(\r\n\r\n            \"No RebarBarType found for {:.0f}mm stirrup.\"\r\n            .format(\r\n                stirrup_dia\r\n            )\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # BEAM GEOMETRY\r\n    # ========================================================\r\n\r\n    try:\r\n\r\n        curve = beam.Location.Curve\r\n\r\n    except:\r\n\r\n        curve = None\r\n\r\n\r\n    if curve is None:\r\n\r\n        raise Exception(\r\n            \"Beam has no LocationCurve.\"\r\n        )\r\n\r\n\r\n    start_xyz = curve.GetEndPoint(\r\n        0\r\n    )\r\n\r\n    end_xyz = curve.GetEndPoint(\r\n        1\r\n    )\r\n\r\n\r\n    beam_start = xyz_to_mm(\r\n        start_xyz\r\n    )\r\n\r\n\r\n    direction_xyz = (\r\n        end_xyz\r\n        .Subtract(\r\n            start_xyz\r\n        )\r\n        .Normalize()\r\n    )\r\n\r\n\r\n    local_x = [\r\n\r\n        direction_xyz.X,\r\n        direction_xyz.Y,\r\n        direction_xyz.Z\r\n    ]\r\n\r\n\r\n    global_z = XYZ(\r\n        0.0,\r\n        0.0,\r\n        1.0\r\n    )\r\n\r\n\r\n    local_y_xyz = (\r\n        global_z.CrossProduct(\r\n            direction_xyz\r\n        )\r\n    )\r\n\r\n\r\n    if local_y_xyz.GetLength() <= 0.000001:\r\n\r\n        raise Exception(\r\n            \"Could not determine beam transverse direction.\"\r\n        )\r\n\r\n\r\n    local_y_xyz = (\r\n        local_y_xyz.Normalize()\r\n    )\r\n\r\n\r\n    local_y = [\r\n\r\n        local_y_xyz.X,\r\n        local_y_xyz.Y,\r\n        local_y_xyz.Z\r\n    ]\r\n\r\n\r\n    # ========================================================\r\n    # COVER / BAR CENTERLINES\r\n    # ========================================================\r\n\r\n    longitudinal_center_cover = (\r\n\r\n        cover\r\n        + stirrup_dia\r\n        + main_dia / 2.0\r\n    )\r\n\r\n\r\n    stirrup_center_cover = (\r\n\r\n        cover\r\n        + stirrup_dia / 2.0\r\n    )\r\n\r\n\r\n    far_side_clearance = (\r\n\r\n        cover\r\n        + main_dia / 2.0\r\n    )\r\n\r\n\r\n    hook_leg = (\r\n\r\n        12.0\r\n        * main_dia\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # MAIN BAR ELEVATIONS\r\n    #\r\n    # Beam location is assumed at top reference,\r\n    # consistent with the previous working generator.\r\n    # ========================================================\r\n\r\n    top_z = (\r\n\r\n        beam_start[2]\r\n        - longitudinal_center_cover\r\n    )\r\n\r\n\r\n    bottom_z = (\r\n\r\n        beam_start[2]\r\n        - beam_depth\r\n        + longitudinal_center_cover\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # SUPPORT MAIN BAR AXES\r\n    # ========================================================\r\n\r\n    if start_hook_required:\r\n\r\n        start_main_axis = move_point(\r\n\r\n            start_far,\r\n\r\n            local_x,\r\n\r\n            far_side_clearance\r\n        )\r\n\r\n    else:\r\n\r\n        start_main_axis = list(\r\n            start_far\r\n        )\r\n\r\n\r\n    if end_hook_required:\r\n\r\n        end_main_axis = move_point(\r\n\r\n            end_far,\r\n\r\n            local_x,\r\n\r\n            -far_side_clearance\r\n        )\r\n\r\n    else:\r\n\r\n        end_main_axis = list(\r\n            end_far\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # COLUMN CENTERS\r\n    # ========================================================\r\n\r\n    start_column_center = midpoint(\r\n\r\n        start_near,\r\n        start_far\r\n    )\r\n\r\n\r\n    end_column_center = midpoint(\r\n\r\n        end_near,\r\n        end_far\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # SUPPORT EXTRA ANCHORS\r\n    # ========================================================\r\n\r\n    if start_continuous:\r\n\r\n        start_extra_anchor = (\r\n            start_column_center\r\n        )\r\n\r\n    else:\r\n\r\n        start_extra_anchor = (\r\n            start_main_axis\r\n        )\r\n\r\n\r\n    if end_continuous:\r\n\r\n        end_extra_anchor = (\r\n            end_column_center\r\n        )\r\n\r\n    else:\r\n\r\n        end_extra_anchor = (\r\n            end_main_axis\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # L/4 LOCATIONS\r\n    # ========================================================\r\n\r\n    quarter_point = move_point(\r\n\r\n        beam_start,\r\n\r\n        local_x,\r\n\r\n        length_mm / 4.0\r\n    )\r\n\r\n\r\n    three_quarter_point = move_point(\r\n\r\n        beam_start,\r\n\r\n        local_x,\r\n\r\n        length_mm * 0.75\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # BAR POSITIONS\r\n    # ========================================================\r\n\r\n    (\r\n        continuous_offsets,\r\n        extra_offsets\r\n    ) = get_bar_offsets(\r\n\r\n        top_qty,\r\n        bottom_qty,\r\n\r\n        beam_width,\r\n        longitudinal_center_cover\r\n    )\r\n\r\n\r\n    if len(\r\n        continuous_offsets\r\n    ) != continuous_qty:\r\n\r\n        raise Exception(\r\n            \"Continuous bar offset count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        extra_offsets\r\n    ) != extra_qty:\r\n\r\n        raise Exception(\r\n            \"Extra bar offset count mismatch.\"\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # VALIDATION COMPLETE\r\n    #\r\n    # Now it is safe to delete existing hosted rebar.\r\n    # ========================================================\r\n\r\n    deleted_count = clear_hosted_rebar(\r\n        beam\r\n    )\r\n\r\n\r\n    tag_prefix = (\r\n\r\n        \"AUTO_BEAM_REBAR:\"\r\n        + str(\r\n            beam_id\r\n        )\r\n        + \":\"\r\n    )\r\n\r\n\r\n    created_top_cont = []\r\n\r\n    created_bottom_cont = []\r\n\r\n    created_start_extra = []\r\n\r\n    created_end_extra = []\r\n\r\n    created_mid_extra = []\r\n\r\n    created_stirrups = []\r\n\r\n\r\n    # ========================================================\r\n    # CONTINUOUS TOP\r\n    # ========================================================\r\n\r\n    for offset in continuous_offsets:\r\n\r\n        points = continuous_bar_points(\r\n\r\n            start_main_axis,\r\n            end_main_axis,\r\n\r\n            offset,\r\n\r\n            top_z,\r\n\r\n            local_y,\r\n\r\n            True,\r\n\r\n            start_hook_required,\r\n            end_hook_required,\r\n\r\n            hook_leg\r\n        )\r\n\r\n\r\n        rebar = create_standard_rebar(\r\n\r\n            beam,\r\n            main_type,\r\n            local_y_xyz,\r\n            points\r\n        )\r\n\r\n\r\n        set_comments(\r\n\r\n            rebar,\r\n\r\n            tag_prefix\r\n            + \"TOP_CONT\"\r\n        )\r\n\r\n\r\n        created_top_cont.append(\r\n            rebar\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # CONTINUOUS BOTTOM\r\n    # ========================================================\r\n\r\n    for offset in continuous_offsets:\r\n\r\n        points = continuous_bar_points(\r\n\r\n            start_main_axis,\r\n            end_main_axis,\r\n\r\n            offset,\r\n\r\n            bottom_z,\r\n\r\n            local_y,\r\n\r\n            False,\r\n\r\n            start_hook_required,\r\n            end_hook_required,\r\n\r\n            hook_leg\r\n        )\r\n\r\n\r\n        rebar = create_standard_rebar(\r\n\r\n            beam,\r\n            main_type,\r\n            local_y_xyz,\r\n            points\r\n        )\r\n\r\n\r\n        set_comments(\r\n\r\n            rebar,\r\n\r\n            tag_prefix\r\n            + \"BOTTOM_CONT\"\r\n        )\r\n\r\n\r\n        created_bottom_cont.append(\r\n            rebar\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # SUPPORT EXTRAS\r\n    # ========================================================\r\n\r\n    if extra_qty > 0:\r\n\r\n        support_is_top = (\r\n\r\n            support_extra_layer.upper()\r\n            == \"TOP\"\r\n        )\r\n\r\n\r\n        support_z = (\r\n\r\n            top_z\r\n            if support_is_top\r\n            else bottom_z\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # START SUPPORT\r\n        # ====================================================\r\n\r\n        for offset in extra_offsets:\r\n\r\n            points = support_extra_points(\r\n\r\n                start_extra_anchor,\r\n\r\n                quarter_point,\r\n\r\n                offset,\r\n\r\n                support_z,\r\n\r\n                local_y,\r\n\r\n                support_is_top,\r\n\r\n                start_hook_required,\r\n\r\n                hook_leg,\r\n\r\n                True\r\n            )\r\n\r\n\r\n            rebar = create_standard_rebar(\r\n\r\n                beam,\r\n                main_type,\r\n                local_y_xyz,\r\n                points\r\n            )\r\n\r\n\r\n            set_comments(\r\n\r\n                rebar,\r\n\r\n                tag_prefix\r\n                + support_extra_layer\r\n                + \"_EXTRA_START\"\r\n            )\r\n\r\n\r\n            created_start_extra.append(\r\n                rebar\r\n            )\r\n\r\n\r\n        # ====================================================\r\n        # END SUPPORT\r\n        # ====================================================\r\n\r\n        for offset in extra_offsets:\r\n\r\n            points = support_extra_points(\r\n\r\n                end_extra_anchor,\r\n\r\n                three_quarter_point,\r\n\r\n                offset,\r\n\r\n                support_z,\r\n\r\n                local_y,\r\n\r\n                support_is_top,\r\n\r\n                end_hook_required,\r\n\r\n                hook_leg,\r\n\r\n                False\r\n            )\r\n\r\n\r\n            rebar = create_standard_rebar(\r\n\r\n                beam,\r\n                main_type,\r\n                local_y_xyz,\r\n                points\r\n            )\r\n\r\n\r\n            set_comments(\r\n\r\n                rebar,\r\n\r\n                tag_prefix\r\n                + support_extra_layer\r\n                + \"_EXTRA_END\"\r\n            )\r\n\r\n\r\n            created_end_extra.append(\r\n                rebar\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # MIDSPAN EXTRAS\r\n    # ========================================================\r\n\r\n    if extra_qty > 0:\r\n\r\n        midspan_is_top = (\r\n\r\n            midspan_extra_layer.upper()\r\n            == \"TOP\"\r\n        )\r\n\r\n\r\n        midspan_z = (\r\n\r\n            top_z\r\n            if midspan_is_top\r\n            else bottom_z\r\n        )\r\n\r\n\r\n        for offset in extra_offsets:\r\n\r\n            points = midspan_extra_points(\r\n\r\n                quarter_point,\r\n                three_quarter_point,\r\n\r\n                offset,\r\n\r\n                midspan_z,\r\n\r\n                local_y\r\n            )\r\n\r\n\r\n            rebar = create_standard_rebar(\r\n\r\n                beam,\r\n                main_type,\r\n                local_y_xyz,\r\n                points\r\n            )\r\n\r\n\r\n            set_comments(\r\n\r\n                rebar,\r\n\r\n                tag_prefix\r\n                + midspan_extra_layer\r\n                + \"_EXTRA_MID\"\r\n            )\r\n\r\n\r\n            created_mid_extra.append(\r\n                rebar\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # STIRRUP GEOMETRY\r\n    # ========================================================\r\n\r\n    end_clearance = (\r\n\r\n        cover\r\n        + stirrup_dia / 2.0\r\n    )\r\n\r\n\r\n    usable_length = (\r\n\r\n        length_mm\r\n        - 2.0 * end_clearance\r\n    )\r\n\r\n\r\n    if usable_length <= 0:\r\n\r\n        raise Exception(\r\n            \"Invalid stirrup usable length.\"\r\n        )\r\n\r\n\r\n    # End confinement zone = 2h\r\n    end_zone = (\r\n\r\n        2.0\r\n        * beam_depth\r\n    )\r\n\r\n\r\n    maximum_end_zone = (\r\n\r\n        usable_length / 2.0\r\n    )\r\n\r\n\r\n    left_zone_length = min(\r\n\r\n        end_zone,\r\n        maximum_end_zone\r\n    )\r\n\r\n\r\n    right_zone_length = min(\r\n\r\n        end_zone,\r\n        maximum_end_zone\r\n    )\r\n\r\n\r\n    middle_zone_length = (\r\n\r\n        usable_length\r\n        - left_zone_length\r\n        - right_zone_length\r\n    )\r\n\r\n\r\n    if middle_zone_length < 0:\r\n\r\n        middle_zone_length = 0.0\r\n\r\n\r\n    left_zone_start = (\r\n        end_clearance\r\n    )\r\n\r\n\r\n    middle_zone_start = (\r\n\r\n        left_zone_start\r\n        + left_zone_length\r\n    )\r\n\r\n\r\n    right_zone_start = (\r\n\r\n        middle_zone_start\r\n        + middle_zone_length\r\n    )\r\n\r\n\r\n    # ========================================================\r\n    # FIRST STIRRUP AXIS\r\n    # ========================================================\r\n\r\n    first_stirrup_axis = move_point(\r\n\r\n        beam_start,\r\n\r\n        local_x,\r\n\r\n        end_clearance\r\n    )\r\n\r\n\r\n    half_stirrup_width = (\r\n\r\n        beam_width / 2.0\r\n        - stirrup_center_cover\r\n    )\r\n\r\n\r\n    left_side = move_point(\r\n\r\n        first_stirrup_axis,\r\n\r\n        local_y,\r\n\r\n        -half_stirrup_width\r\n    )\r\n\r\n\r\n    right_side = move_point(\r\n\r\n        first_stirrup_axis,\r\n\r\n        local_y,\r\n\r\n        half_stirrup_width\r\n    )\r\n\r\n\r\n    stirrup_top_z = (\r\n\r\n        beam_start[2]\r\n        - stirrup_center_cover\r\n    )\r\n\r\n\r\n    stirrup_bottom_z = (\r\n\r\n        beam_start[2]\r\n        - beam_depth\r\n        + stirrup_center_cover\r\n    )\r\n\r\n\r\n    p1 = [\r\n\r\n        left_side[0],\r\n        left_side[1],\r\n        stirrup_bottom_z\r\n    ]\r\n\r\n\r\n    p2 = [\r\n\r\n        right_side[0],\r\n        right_side[1],\r\n        stirrup_bottom_z\r\n    ]\r\n\r\n\r\n    p3 = [\r\n\r\n        right_side[0],\r\n        right_side[1],\r\n        stirrup_top_z\r\n    ]\r\n\r\n\r\n    p4 = [\r\n\r\n        left_side[0],\r\n        left_side[1],\r\n        stirrup_top_z\r\n    ]\r\n\r\n\r\n    base_stirrup_shape = [\r\n\r\n        p1,\r\n        p2,\r\n        p3,\r\n        p4,\r\n        p1\r\n    ]\r\n\r\n\r\n    # ========================================================\r\n    # LEFT STIRRUP ZONE\r\n    # ========================================================\r\n\r\n    left_set = create_stirrup_zone(\r\n\r\n        beam,\r\n        stirrup_type,\r\n\r\n        direction_xyz,\r\n        local_x,\r\n\r\n        base_stirrup_shape,\r\n\r\n        end_clearance,\r\n\r\n        left_zone_start,\r\n        left_zone_length,\r\n\r\n        end_spacing,\r\n\r\n        tag_prefix\r\n        + \"STIRRUP_LEFT\"\r\n    )\r\n\r\n\r\n    if left_set is not None:\r\n\r\n        created_stirrups.append(\r\n            left_set\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # MIDDLE STIRRUP ZONE\r\n    # ========================================================\r\n\r\n    if middle_zone_length > 0:\r\n\r\n        middle_set = create_stirrup_zone(\r\n\r\n            beam,\r\n            stirrup_type,\r\n\r\n            direction_xyz,\r\n            local_x,\r\n\r\n            base_stirrup_shape,\r\n\r\n            end_clearance,\r\n\r\n            middle_zone_start,\r\n            middle_zone_length,\r\n\r\n            mid_spacing,\r\n\r\n            tag_prefix\r\n            + \"STIRRUP_MID\"\r\n        )\r\n\r\n\r\n        if middle_set is not None:\r\n\r\n            created_stirrups.append(\r\n                middle_set\r\n            )\r\n\r\n\r\n    # ========================================================\r\n    # RIGHT STIRRUP ZONE\r\n    # ========================================================\r\n\r\n    right_set = create_stirrup_zone(\r\n\r\n        beam,\r\n        stirrup_type,\r\n\r\n        direction_xyz,\r\n        local_x,\r\n\r\n        base_stirrup_shape,\r\n\r\n        end_clearance,\r\n\r\n        right_zone_start,\r\n        right_zone_length,\r\n\r\n        end_spacing,\r\n\r\n        tag_prefix\r\n        + \"STIRRUP_RIGHT\"\r\n    )\r\n\r\n\r\n    if right_set is not None:\r\n\r\n        created_stirrups.append(\r\n            right_set\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # CREATION VALIDATION\r\n    # ========================================================\r\n\r\n    if len(\r\n        created_top_cont\r\n    ) != continuous_qty:\r\n\r\n        raise Exception(\r\n\r\n            \"Top continuous count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        created_bottom_cont\r\n    ) != continuous_qty:\r\n\r\n        raise Exception(\r\n\r\n            \"Bottom continuous count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        created_start_extra\r\n    ) != extra_qty:\r\n\r\n        raise Exception(\r\n\r\n            \"Start extra count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        created_end_extra\r\n    ) != extra_qty:\r\n\r\n        raise Exception(\r\n\r\n            \"End extra count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        created_mid_extra\r\n    ) != extra_qty:\r\n\r\n        raise Exception(\r\n\r\n            \"Midspan extra count mismatch.\"\r\n        )\r\n\r\n\r\n    if len(\r\n        created_stirrups\r\n    ) < 2:\r\n\r\n        raise Exception(\r\n\r\n            \"Stirrup zones were not created correctly.\"\r\n        )\r\n\r\n\r\n    # ========================================================\r\n    # RESULTING CROSS SECTIONS\r\n    # ========================================================\r\n\r\n    support_section = [\r\n\r\n        top_qty,\r\n        bottom_qty\r\n    ]\r\n\r\n\r\n    midspan_section = [\r\n\r\n        bottom_qty,\r\n        top_qty\r\n    ]\r\n\r\n\r\n    # ========================================================\r\n    # SUCCESS REPORT\r\n    # ========================================================\r\n\r\n    return [\r\n\r\n        beam_id,                       # 0\r\n\r\n        True,                          # 1\r\n\r\n        \"SUCCESS\",                     # 2\r\n\r\n        deleted_count,                 # 3\r\n\r\n        len(\r\n            created_top_cont\r\n        ),                              # 4\r\n\r\n        len(\r\n            created_bottom_cont\r\n        ),                              # 5\r\n\r\n        len(\r\n            created_start_extra\r\n        ),                              # 6\r\n\r\n        len(\r\n            created_end_extra\r\n        ),                              # 7\r\n\r\n        len(\r\n            created_mid_extra\r\n        ),                              # 8\r\n\r\n        len(\r\n            created_stirrups\r\n        ),                              # 9\r\n\r\n        start_continuous,              # 10\r\n        end_continuous,                # 11\r\n\r\n        start_hook_required,           # 12\r\n        end_hook_required,             # 13\r\n\r\n        main_dia,                      # 14\r\n\r\n        stirrup_dia,                   # 15\r\n\r\n        top_qty,                       # 16\r\n\r\n        bottom_qty,                    # 17\r\n\r\n        continuous_qty,                # 18\r\n\r\n        extra_qty,                     # 19\r\n\r\n        support_extra_layer,           # 20\r\n\r\n        midspan_extra_layer,           # 21\r\n\r\n        support_section,               # 22\r\n\r\n        midspan_section,               # 23\r\n\r\n        [\r\n            left_zone_length,\r\n            middle_zone_length,\r\n            right_zone_length\r\n        ],                              # 24\r\n\r\n        [\r\n            end_spacing,\r\n            mid_spacing,\r\n            end_spacing\r\n        ],                              # 25\r\n\r\n        continuous_offsets,            # 26\r\n\r\n        extra_offsets                  # 27\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# READ B02\r\n# ============================================================\r\n\r\nb02 = IN[0]\r\n\r\n\r\ntry:\r\n\r\n    b02_reports = as_list(\r\n        b02[0]\r\n    )\r\n\r\n    b02_ready = bool(\r\n        b02[7]\r\n    )\r\n\r\n    b02_error = None\r\n\r\n\r\nexcept Exception as ex:\r\n\r\n    b02_reports = []\r\n\r\n    b02_ready = False\r\n\r\n    b02_error = str(\r\n        ex\r\n    )\r\n\r\n\r\n# ============================================================\r\n# INVALID INPUT\r\n# ============================================================\r\n\r\nif b02_error is not None:\r\n\r\n    OUT = [\r\n\r\n        False,                         # 0\r\n\r\n        \"INVALID B02 INPUT\",           # 1\r\n\r\n        [],                            # 2\r\n\r\n        0,                             # 3\r\n\r\n        [],                            # 4\r\n\r\n        0,                             # 5\r\n\r\n        [\r\n            b02_error\r\n        ]                              # 6\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# B02 NOT READY\r\n# ============================================================\r\n\r\nelif not b02_ready:\r\n\r\n    OUT = [\r\n\r\n        False,                         # 0\r\n\r\n        \"B02 NOT READY\",               # 1\r\n\r\n        [],                            # 2\r\n\r\n        0,                             # 3\r\n\r\n        [],                            # 4\r\n\r\n        0,                             # 5\r\n\r\n        []                             # 6\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# RUN BATCH\r\n# ============================================================\r\n\r\nelse:\r\n\r\n    batch_reports = []\r\n\r\n    successful_ids = []\r\n\r\n    failed_reports = []\r\n\r\n\r\n    TransactionManager.Instance.EnsureInTransaction(\r\n        doc\r\n    )\r\n\r\n\r\n    try:\r\n\r\n        for b02_report in b02_reports:\r\n\r\n            # =================================================\r\n            # B02 READY CHECK\r\n            # =================================================\r\n\r\n            try:\r\n\r\n                beam_ready = bool(\r\n                    b02_report[1]\r\n                )\r\n\r\n                beam_id = b02_report[0]\r\n\r\n\r\n            except Exception as ex:\r\n\r\n                failure = [\r\n\r\n                    None,\r\n\r\n                    False,\r\n\r\n                    \"INVALID B02 REPORT\",\r\n\r\n                    str(ex)\r\n                ]\r\n\r\n\r\n                batch_reports.append(\r\n                    failure\r\n                )\r\n\r\n                failed_reports.append(\r\n                    failure\r\n                )\r\n\r\n                continue\r\n\r\n\r\n            if not beam_ready:\r\n\r\n                failure = [\r\n\r\n                    beam_id,\r\n\r\n                    False,\r\n\r\n                    \"SKIPPED - B02 FAILED\",\r\n\r\n                    b02_report[3]\r\n                ]\r\n\r\n\r\n                batch_reports.append(\r\n                    failure\r\n                )\r\n\r\n                failed_reports.append(\r\n                    failure\r\n                )\r\n\r\n                continue\r\n\r\n\r\n            # =================================================\r\n            # ONE BEAM = ONE SUBTRANSACTION\r\n            # =================================================\r\n\r\n            sub_transaction = SubTransaction(\r\n                doc\r\n            )\r\n\r\n\r\n            sub_transaction.Start()\r\n\r\n\r\n            try:\r\n\r\n                result = process_beam(\r\n                    b02_report\r\n                )\r\n\r\n\r\n                sub_transaction.Commit()\r\n\r\n\r\n                batch_reports.append(\r\n                    result\r\n                )\r\n\r\n\r\n                successful_ids.append(\r\n                    result[0]\r\n                )\r\n\r\n\r\n            except Exception as ex:\r\n\r\n                try:\r\n\r\n                    sub_transaction.RollBack()\r\n\r\n                except:\r\n                    pass\r\n\r\n\r\n                failure = [\r\n\r\n                    beam_id,\r\n\r\n                    False,\r\n\r\n                    \"FAILED\",\r\n\r\n                    str(ex)\r\n                ]\r\n\r\n\r\n                batch_reports.append(\r\n                    failure\r\n                )\r\n\r\n\r\n                failed_reports.append(\r\n                    failure\r\n                )\r\n\r\n\r\n    finally:\r\n\r\n        TransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\n    # ========================================================\r\n    # FINAL\r\n    # ========================================================\r\n\r\n    batch_ok = (\r\n\r\n        len(\r\n            successful_ids\r\n        ) > 0\r\n\r\n        and\r\n\r\n        len(\r\n            failed_reports\r\n        ) == 0\r\n    )\r\n\r\n\r\n    OUT = [\r\n\r\n        batch_ok,                      # 0\r\n\r\n        (\r\n            \"BATCH AUTO-REBAR COMPLETE\"\r\n            if batch_ok\r\n            else\r\n            \"BATCH COMPLETED WITH ERRORS\"\r\n        ),                             # 1\r\n\r\n        batch_reports,                 # 2\r\n\r\n        len(\r\n            successful_ids\r\n        ),                             # 3\r\n\r\n        successful_ids,               # 4\r\n\r\n        len(\r\n            failed_reports\r\n        ),                             # 5\r\n\r\n        failed_reports                 # 6\r\n    ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "3728d0a583e8459581ea16e58d0974ae",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "1dafbb307eec45a5a1e973c6f418b45b",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5ca912a1260542a89e75ddb49eb38603",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# ============================================================\r\n# J01 — USER REBAR INPUT JUNCTION\r\n#\r\n# IN[0] = Top Bars\r\n# IN[1] = Top Diameter\r\n# IN[2] = Bottom Bars\r\n# IN[3] = Bottom Diameter\r\n# IN[4] = Stirrup Diameter\r\n# IN[5] = End Spacing\r\n# IN[6] = Mid Spacing\r\n# IN[7] = Cover\r\n#\r\n# OUT:\r\n# [0] TopQty\r\n# [1] BottomQty\r\n# [2] TopDia\r\n# [3] BottomDia\r\n# [4] StirrupDia\r\n# [5] Cover\r\n# [6] EndSpacing\r\n# [7] MidSpacing\r\n# [8] ContinuousQty\r\n# [9] ExtraQty\r\n# [10] SupportExtraLayer\r\n# [11] MidspanExtraLayer\r\n# [12] SupportSection\r\n# [13] MidspanSection\r\n# [14] Ready\r\n# [15] Errors\r\n# [16] Status\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# CONVERSION HELPERS\r\n# ============================================================\r\n\r\ndef to_int(value):\r\n\r\n    try:\r\n        return int(\r\n            round(\r\n                float(value)\r\n            )\r\n        )\r\n\r\n    except:\r\n        return None\r\n\r\n\r\ndef to_float(value):\r\n\r\n    try:\r\n        return float(value)\r\n\r\n    except:\r\n        return None\r\n\r\n\r\n# ============================================================\r\n# READ PLAYER INPUTS\r\n# ============================================================\r\n\r\ntop_qty = to_int(\r\n    IN[0]\r\n)\r\n\r\ntop_dia = to_float(\r\n    IN[1]\r\n)\r\n\r\nbottom_qty = to_int(\r\n    IN[2]\r\n)\r\n\r\nbottom_dia = to_float(\r\n    IN[3]\r\n)\r\n\r\nstirrup_dia = to_float(\r\n    IN[4]\r\n)\r\n\r\nend_spacing = to_float(\r\n    IN[5]\r\n)\r\n\r\nmid_spacing = to_float(\r\n    IN[6]\r\n)\r\n\r\ncover = to_float(\r\n    IN[7]\r\n)\r\n\r\n\r\n# ============================================================\r\n# VALIDATION\r\n# ============================================================\r\n\r\nerrors = []\r\n\r\n\r\nif top_qty is None:\r\n\r\n    errors.append(\r\n        \"Top Bars is invalid.\"\r\n    )\r\n\r\nelif top_qty < 2:\r\n\r\n    errors.append(\r\n        \"Top Bars must be at least 2.\"\r\n    )\r\n\r\n\r\nif bottom_qty is None:\r\n\r\n    errors.append(\r\n        \"Bottom Bars is invalid.\"\r\n    )\r\n\r\nelif bottom_qty < 2:\r\n\r\n    errors.append(\r\n        \"Bottom Bars must be at least 2.\"\r\n    )\r\n\r\n\r\nif top_dia is None or top_dia <= 0:\r\n\r\n    errors.append(\r\n        \"Top Diameter is invalid.\"\r\n    )\r\n\r\n\r\nif bottom_dia is None or bottom_dia <= 0:\r\n\r\n    errors.append(\r\n        \"Bottom Diameter is invalid.\"\r\n    )\r\n\r\n\r\nif stirrup_dia is None or stirrup_dia <= 0:\r\n\r\n    errors.append(\r\n        \"Stirrup Diameter is invalid.\"\r\n    )\r\n\r\n\r\nif cover is None or cover <= 0:\r\n\r\n    errors.append(\r\n        \"Cover is invalid.\"\r\n    )\r\n\r\n\r\nif end_spacing is None or end_spacing <= 0:\r\n\r\n    errors.append(\r\n        \"End Spacing is invalid.\"\r\n    )\r\n\r\n\r\nif mid_spacing is None or mid_spacing <= 0:\r\n\r\n    errors.append(\r\n        \"Mid Spacing is invalid.\"\r\n    )\r\n\r\n\r\n# ============================================================\r\n# REBAR QUANTITY LOGIC\r\n# ============================================================\r\n\r\ncontinuous_qty = None\r\nextra_qty = None\r\n\r\nsupport_extra_layer = None\r\nmidspan_extra_layer = None\r\n\r\nsupport_section = None\r\nmidspan_section = None\r\n\r\n\r\nif (\r\n    top_qty is not None\r\n    and\r\n    bottom_qty is not None\r\n):\r\n\r\n    continuous_qty = min(\r\n        top_qty,\r\n        bottom_qty\r\n    )\r\n\r\n\r\n    extra_qty = abs(\r\n        top_qty - bottom_qty\r\n    )\r\n\r\n\r\n    if top_qty > bottom_qty:\r\n\r\n        support_extra_layer = \"TOP\"\r\n\r\n        midspan_extra_layer = \"BOTTOM\"\r\n\r\n\r\n    elif bottom_qty > top_qty:\r\n\r\n        support_extra_layer = \"BOTTOM\"\r\n\r\n        midspan_extra_layer = \"TOP\"\r\n\r\n\r\n    else:\r\n\r\n        support_extra_layer = \"NONE\"\r\n\r\n        midspan_extra_layer = \"NONE\"\r\n\r\n\r\n    support_section = [\r\n        top_qty,\r\n        bottom_qty\r\n    ]\r\n\r\n\r\n    midspan_section = [\r\n        bottom_qty,\r\n        top_qty\r\n    ]\r\n\r\n\r\n# ============================================================\r\n# FINAL STATUS\r\n# ============================================================\r\n\r\nready = (\r\n    len(errors) == 0\r\n)\r\n\r\n\r\nif ready:\r\n\r\n    status = \"USER REBAR INPUT READY\"\r\n\r\nelse:\r\n\r\n    status = \"USER REBAR INPUT FAILED\"\r\n\r\n\r\n# ============================================================\r\n# OUTPUT\r\n# ============================================================\r\n\r\nOUT = [\r\n\r\n    top_qty,                    # 0\r\n\r\n    bottom_qty,                 # 1\r\n\r\n    top_dia,                    # 2\r\n\r\n    bottom_dia,                 # 3\r\n\r\n    stirrup_dia,                # 4\r\n\r\n    cover,                      # 5\r\n\r\n    end_spacing,                # 6\r\n\r\n    mid_spacing,                # 7\r\n\r\n    continuous_qty,             # 8\r\n\r\n    extra_qty,                  # 9\r\n\r\n    support_extra_layer,        # 10\r\n\r\n    midspan_extra_layer,        # 11\r\n\r\n    support_section,            # 12\r\n\r\n    midspan_section,            # 13\r\n\r\n    ready,                      # 14\r\n\r\n    errors,                     # 15\r\n\r\n    status                      # 16\r\n]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "040d1810e90649fe9848a6a9cf39d233",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "35cdf447c5a04910b703e686ffd5a92f",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "5d4873a4bcd6448dbf7c86dbe963f889",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e4fc7158447948af9887a573c15f8249",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "7c0ddf4834a14a46bcefd8605bb00a2d",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "fd33ac9b02cc4a9e94ec5f5efde13188",
+          "Name": "IN[4]",
+          "Description": "Input #4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ad4accdcf0ba4e10b63e45b2a9e5de5f",
+          "Name": "IN[5]",
+          "Description": "Input #5",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "10d09d09eddb49d093cbf06a90a4d6cb",
+          "Name": "IN[6]",
+          "Description": "Input #6",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f25a6febb6b04bc0b8bf908ec6520d03",
+          "Name": "IN[7]",
+          "Description": "Input #7",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "3eb23ff2b7964196961e29c89e0e4677",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 16,
+      "MinimumValue": 2,
+      "StepValue": 2,
+      "Id": "65e7b8d876f841359140993c71c36557",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "05d1ac4457c44dfc8fc2e6ae923b8572",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 4
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 16,
+      "MinimumValue": 2,
+      "StepValue": 1,
+      "Id": "91faedd4198249539fa12494597ff261",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "f9c6aaff75e146cca8e537855382dc21",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 2
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 25,
+      "MinimumValue": 10,
+      "StepValue": 1,
+      "Id": "45038abebba245ffbddd721cd7c28815",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "6cf3ccc37d8f41a09ac0df0830792a8a",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 16
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 25,
+      "MinimumValue": 10,
+      "StepValue": 1,
+      "Id": "1b3e9e44fed7438ca20d4e943e8bfba1",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4e8fd77b88404e90b635093b15b2bd0b",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 17
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "4e67d25e042449089fed48f36b2111f4",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "64a8f0881e1b43aeb5ceb121d2b55243",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 1
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "3103ff370f6840c294256568a9abfb73",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4d028df4a0404a799c0aa327f5316515",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 1
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "613245d0184e49e2bf7b64fd2d00de87",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "d27fed77804d46fc9a29aaf3c6748b45",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 1
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "859ef6a4f1a544e5bd851b3ac292f310",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "8026e3349dcd4af0b7385c7b3258a479",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 1
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\n\r\nclr.AddReference(\"System.Windows.Forms\")\r\nclr.AddReference(\"System.Drawing\")\r\n\r\nfrom System.Windows.Forms import (\r\n    Form,\r\n    Label,\r\n    ComboBox,\r\n    ComboBoxStyle,\r\n    Button,\r\n    DialogResult,\r\n    FormBorderStyle\r\n)\r\n\r\nfrom System.Drawing import (\r\n    Point,\r\n    Size,\r\n    Font,\r\n    FontStyle\r\n)\r\n\r\n\r\n# ============================================================\r\n# U01 — SELECT BEAM TYPE FROM T01\r\n#\r\n# IN[0] = Entire T01 output\r\n#\r\n# T01 format:\r\n#\r\n# [0] Type Names\r\n# [1] Type IDs\r\n# [2] Type Elements\r\n# [3] Instance Counts\r\n# [4] Number of Types\r\n#\r\n#\r\n# OUT:\r\n#\r\n# [0] Selected Type Name\r\n# [1] Selected Type ID\r\n# [2] Selected Type Element\r\n# [3] Instance Count\r\n# [4] Ready\r\n# [5] Status\r\n# ============================================================\r\n\r\n\r\n# ============================================================\r\n# READ T01\r\n# ============================================================\r\n\r\nt01 = IN[0]\r\n\r\n\r\ntry:\r\n\r\n    type_names = list(\r\n        t01[0]\r\n    )\r\n\r\n    type_ids = list(\r\n        t01[1]\r\n    )\r\n\r\n    type_elements = list(\r\n        t01[2]\r\n    )\r\n\r\n    instance_counts = list(\r\n        t01[3]\r\n    )\r\n\r\nexcept:\r\n\r\n    type_names = []\r\n    type_ids = []\r\n    type_elements = []\r\n    instance_counts = []\r\n\r\n\r\n# ============================================================\r\n# FORM\r\n# ============================================================\r\n\r\nclass InputForm(Form):\r\n\r\n    def __init__(\r\n        self,\r\n        type_names,\r\n        instance_counts\r\n    ):\r\n\r\n        self.Text = (\r\n            \"Beam Reinforcement Generator — Revit 2026\"\r\n        )\r\n\r\n        self.Size = Size(\r\n            520,\r\n            210\r\n        )\r\n\r\n        self.FormBorderStyle = (\r\n            FormBorderStyle.FixedDialog\r\n        )\r\n\r\n        self.MaximizeBox = False\r\n        self.MinimizeBox = False\r\n\r\n        self.StartPosition = 1\r\n\r\n        self.Font = Font(\r\n            \"Segoe UI\",\r\n            9\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # TITLE\r\n        # ====================================================\r\n\r\n        title = Label()\r\n\r\n        title.Text = (\r\n            \"SELECT STRUCTURAL BEAM TYPE\"\r\n        )\r\n\r\n        title.Font = Font(\r\n            \"Segoe UI\",\r\n            11,\r\n            FontStyle.Bold\r\n        )\r\n\r\n        title.Location = Point(\r\n            18,\r\n            18\r\n        )\r\n\r\n        title.Size = Size(\r\n            470,\r\n            25\r\n        )\r\n\r\n        self.Controls.Add(\r\n            title\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # LABEL\r\n        # ====================================================\r\n\r\n        label = Label()\r\n\r\n        label.Text = (\r\n            \"Beam type to update\"\r\n        )\r\n\r\n        label.Location = Point(\r\n            20,\r\n            65\r\n        )\r\n\r\n        label.Size = Size(\r\n            180,\r\n            23\r\n        )\r\n\r\n        self.Controls.Add(\r\n            label\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # COMBO\r\n        # ====================================================\r\n\r\n        self.combo = ComboBox()\r\n\r\n        self.combo.DropDownStyle = (\r\n            ComboBoxStyle.DropDownList\r\n        )\r\n\r\n        self.combo.Location = Point(\r\n            205,\r\n            62\r\n        )\r\n\r\n        self.combo.Size = Size(\r\n            285,\r\n            24\r\n        )\r\n\r\n\r\n        for i in range(\r\n            len(type_names)\r\n        ):\r\n\r\n            name = str(\r\n                type_names[i]\r\n            )\r\n\r\n\r\n            try:\r\n\r\n                count = int(\r\n                    instance_counts[i]\r\n                )\r\n\r\n            except:\r\n\r\n                count = 0\r\n\r\n\r\n            display = (\r\n                \"{} | {} beam(s)\"\r\n                .format(\r\n                    name,\r\n                    count\r\n                )\r\n            )\r\n\r\n\r\n            self.combo.Items.Add(\r\n                display\r\n            )\r\n\r\n\r\n        if len(type_names) > 0:\r\n\r\n            self.combo.SelectedIndex = 0\r\n\r\n\r\n        self.Controls.Add(\r\n            self.combo\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # SELECT BUTTON\r\n        # ====================================================\r\n\r\n        select_button = Button()\r\n\r\n        select_button.Text = (\r\n            \"Select\"\r\n        )\r\n\r\n        select_button.Location = Point(\r\n            315,\r\n            115\r\n        )\r\n\r\n        select_button.Size = Size(\r\n            85,\r\n            32\r\n        )\r\n\r\n        select_button.DialogResult = (\r\n            DialogResult.OK\r\n        )\r\n\r\n        self.Controls.Add(\r\n            select_button\r\n        )\r\n\r\n        self.AcceptButton = (\r\n            select_button\r\n        )\r\n\r\n\r\n        # ====================================================\r\n        # CANCEL BUTTON\r\n        # ====================================================\r\n\r\n        cancel_button = Button()\r\n\r\n        cancel_button.Text = (\r\n            \"Cancel\"\r\n        )\r\n\r\n        cancel_button.Location = Point(\r\n            405,\r\n            115\r\n        )\r\n\r\n        cancel_button.Size = Size(\r\n            85,\r\n            32\r\n        )\r\n\r\n        cancel_button.DialogResult = (\r\n            DialogResult.Cancel\r\n        )\r\n\r\n        self.Controls.Add(\r\n            cancel_button\r\n        )\r\n\r\n        self.CancelButton = (\r\n            cancel_button\r\n        )\r\n\r\n\r\n# ============================================================\r\n# RUN\r\n# ============================================================\r\n\r\nif len(type_names) == 0:\r\n\r\n    OUT = [\r\n\r\n        None,                           # 0\r\n        None,                           # 1\r\n        None,                           # 2\r\n        0,                              # 3\r\n\r\n        False,                          # 4\r\n\r\n        \"NO BEAM TYPES FROM T01\"       # 5\r\n    ]\r\n\r\n\r\nelse:\r\n\r\n    form = InputForm(\r\n        type_names,\r\n        instance_counts\r\n    )\r\n\r\n\r\n    result = (\r\n        form.ShowDialog()\r\n    )\r\n\r\n\r\n    if result != DialogResult.OK:\r\n\r\n        OUT = [\r\n\r\n            None,\r\n            None,\r\n            None,\r\n            0,\r\n\r\n            False,\r\n\r\n            \"USER CANCELLED\"\r\n        ]\r\n\r\n\r\n    else:\r\n\r\n        index = int(\r\n            form.combo.SelectedIndex\r\n        )\r\n\r\n\r\n        if (\r\n            index < 0\r\n            or\r\n            index >= len(type_names)\r\n        ):\r\n\r\n            OUT = [\r\n\r\n                None,\r\n                None,\r\n                None,\r\n                0,\r\n\r\n                False,\r\n\r\n                \"INVALID BEAM TYPE SELECTION\"\r\n            ]\r\n\r\n\r\n        else:\r\n\r\n            OUT = [\r\n\r\n                type_names[index],          # 0\r\n\r\n                type_ids[index],            # 1\r\n\r\n                type_elements[index],       # 2\r\n\r\n                instance_counts[index],     # 3\r\n\r\n                True,                       # 4\r\n\r\n                \"BEAM TYPE SELECTED\"        # 5\r\n            ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "aa7f16e028b64750a6860f97f1464659",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "698069ec05a8429db232d9b403c73c8f",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "63b7f8d8259d4a8ebdc5a5152cca587a",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "968f32b99bb84e7692f2a1433ae27b1f",
+      "End": "698069ec05a8429db232d9b403c73c8f",
+      "Id": "70e070d44dab4624ba92d979f8ba0b35",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "968f32b99bb84e7692f2a1433ae27b1f",
+      "End": "50b26d8852354808a08bdc04d10043e0",
+      "Id": "52441880e76b449d98c8e3689f36d07f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "14232da4ecb740a1adfe75a547e5cfc3",
+      "End": "0cede7aee1e8420ba1bd44108b5456fa",
+      "Id": "a8cb25b786b54e9792aeb221e3b8dd79",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "8f8457dc30b74ad09c49b8e7ed9c6343",
+      "End": "174a9509a1e04028b7e782c58cfc84f9",
+      "Id": "cf1ef3bd2fd940868105c9a26f515b30",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dd12ed5f22144759a88dab5a468adb40",
+      "End": "5e9dcca18efd458384d1301e331abcea",
+      "Id": "dcd5d83595f0420492cc723bb6e8c6e5",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9c000d5a2ec743c0b6ccac2e865fd6d9",
+      "End": "1dafbb307eec45a5a1e973c6f418b45b",
+      "Id": "a3e8a555dd9e41e7acd72b97cc8211eb",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "05d1ac4457c44dfc8fc2e6ae923b8572",
+      "End": "35cdf447c5a04910b703e686ffd5a92f",
+      "Id": "2e631539fdac493eb4df7b16c9b850d9",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f9c6aaff75e146cca8e537855382dc21",
+      "End": "e4fc7158447948af9887a573c15f8249",
+      "Id": "2d586a0d0a454fb699bbd1235002cf49",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "6cf3ccc37d8f41a09ac0df0830792a8a",
+      "End": "5d4873a4bcd6448dbf7c86dbe963f889",
+      "Id": "dd44893d65b540c0aa7e4a0749f03ff3",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "4e8fd77b88404e90b635093b15b2bd0b",
+      "End": "7c0ddf4834a14a46bcefd8605bb00a2d",
+      "Id": "a3b5934712f644ed89f37cf651173fa3",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "64a8f0881e1b43aeb5ceb121d2b55243",
+      "End": "fd33ac9b02cc4a9e94ec5f5efde13188",
+      "Id": "1954b45ca8f4497ea4aeeac28f66c7e8",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "4d028df4a0404a799c0aa327f5316515",
+      "End": "ad4accdcf0ba4e10b63e45b2a9e5de5f",
+      "Id": "9a9bf3e64e374f238a08b0a7283a30b7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d27fed77804d46fc9a29aaf3c6748b45",
+      "End": "10d09d09eddb49d093cbf06a90a4d6cb",
+      "Id": "40005d62af294890b15d9855e9a382db",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "8026e3349dcd4af0b7385c7b3258a479",
+      "End": "f25a6febb6b04bc0b8bf908ec6520d03",
+      "Id": "492643f982e04460bd6f192289bdee2e",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "63b7f8d8259d4a8ebdc5a5152cca587a",
+      "End": "abc983ea0edd417d9c8738a508874010",
+      "Id": "7f19cec0924341d3b50cca10246811fd",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.0",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "7.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.0.3.7597",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "7bfe23d5827c44c09bb7dcf0a5326cf3",
+        "Name": "T01",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -3290.575788524313,
+        "Y": -223.50536010752
+      },
+      {
+        "Id": "e5e2b45bc6e44b98b60cb1c5f22c88bc",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -3049.9923735931607,
+        "Y": -561.5471792292631
+      },
+      {
+        "Id": "65c48025288543a69b99a28393e525e7",
+        "Name": "T03",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "ShowGeometry": true,
+        "X": -3295.7684861643534,
+        "Y": 47.673194379999416
+      },
+      {
+        "Id": "0ffe860400f54d8f8547fd2f0b1a1373",
+        "Name": "T04",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -3301.6697078029642,
+        "Y": 187.33543982709938
+      },
+      {
+        "Id": "b02f80c09fe94477bf5c1674bca2fc8d",
+        "Name": "B01",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -2937.3224214416905,
+        "Y": -263.68052485297227
+      },
+      {
+        "Id": "c79a1f964ab843c1989c2d4272e9e64c",
+        "Name": "B02",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -2934.03257074842,
+        "Y": -129.49225607082786
+      },
+      {
+        "Id": "3728d0a583e8459581ea16e58d0974ae",
+        "Name": "B03",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -2932.536810628297,
+        "Y": 19.107941348304507
+      },
+      {
+        "Id": "040d1810e90649fe9848a6a9cf39d233",
+        "Name": "J01",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -3643.541226816768,
+        "Y": 59.555642713496695
+      },
+      {
+        "Id": "65e7b8d876f841359140993c71c36557",
+        "Name": "Top Bars",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4217.188529287219,
+        "Y": -195.29613571641931
+      },
+      {
+        "Id": "91faedd4198249539fa12494597ff261",
+        "Name": "Bottom Bars",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4220.343406544695,
+        "Y": 55.35615367951527
+      },
+      {
+        "Id": "45038abebba245ffbddd721cd7c28815",
+        "Name": "Top Diameter",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4216.772134434991,
+        "Y": -72.92543708693537
+      },
+      {
+        "Id": "1b3e9e44fed7438ca20d4e943e8bfba1",
+        "Name": "Bottom Diameter",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4217.925038115103,
+        "Y": 180.32923514197705
+      },
+      {
+        "Id": "4e67d25e042449089fed48f36b2111f4",
+        "Name": "StirrupDiameter",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4218.396966786342,
+        "Y": 390.68643691802896
+      },
+      {
+        "Id": "3103ff370f6840c294256568a9abfb73",
+        "Name": "EndSpacing",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4218.92103431511,
+        "Y": 529.3051892029131
+      },
+      {
+        "Id": "613245d0184e49e2bf7b64fd2d00de87",
+        "Name": "Midspacing",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4219.445101843878,
+        "Y": 689.117249548511
+      },
+      {
+        "Id": "859ef6a4f1a544e5bd851b3ac292f310",
+        "Name": "Cover",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -4212.818838944202,
+        "Y": 831.1912697838484
+      },
+      {
+        "Id": "aa7f16e028b64750a6860f97f1464659",
+        "Name": "T02",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -3294.7367216636803,
+        "Y": -94.35066259839095
+      }
+    ],
+    "Annotations": [],
+    "X": 3007.9768397979074,
+    "Y": 577.3361777465661,
+    "Zoom": 0.8476460686344326
+  }
+}

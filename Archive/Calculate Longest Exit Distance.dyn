@@ -1,0 +1,1453 @@
+{
+  "Uuid": "164e64fc-37b1-447d-8d4d-0f0bab3a3a30",
+  "IsCustomNode": false,
+  "Description": "Creates a single path of travel in a room from a point that is farthest away from its closest exit.",
+  "Name": "Calculate Longest Exit Distance",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "ea9a5849c6804d20b34f52e2b7cc4849",
+      "Name": "Select Exit Door 1",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "",
+      "Description": "Select a model element from the Revit document filtered by Category.",
+      "SelectedIndex": 0
+    },
+    {
+      "Id": "4f50efa574ec42a6b89fad5e2e2a344c",
+      "Name": "Select Exit Door 2",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "",
+      "Description": "Select a model element from the Revit document filtered by Category.",
+      "SelectedIndex": 0
+    }
+  ],
+  "Outputs": [
+    {
+      "Id": "f337df2a9d2f49edac1f616df5a4c5cc",
+      "Name": "Calculation Results",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Application.Document.Current",
+      "Id": "3d63828be0be4fec9d312fe2e2c5e22d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "7c7f07ae0d514072a9ea66bb4f7d7404",
+          "Name": "Document",
+          "Description": "Document",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get the current document\n\nDocument.Current: Document"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Application.Document.ActiveView",
+      "Id": "309fedfbd05048efb2b914e67aee7f66",
+      "Inputs": [
+        {
+          "Id": "369047479c6e48b58ea9aec68fc0c368",
+          "Name": "document",
+          "Description": "Revit.Application.Document",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6e22a549918b43beb5f205198218648a",
+          "Name": "View",
+          "Description": "View",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get the active view for the document\n\nDocument.ActiveView: View"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.PathOfTravel.LongestOfShortestExitPaths@Revit.Elements.Views.FloorPlanView,Autodesk.DesignScript.Geometry.Point[]",
+      "Id": "5f5a20ba4bf54576a83082245b3183bc",
+      "Inputs": [
+        {
+          "Id": "72d9496988704b6a809191eca2e34805",
+          "Name": "floorPlan",
+          "Description": "Floor plan view for which rooms will be used to retrieve longest paths to the specified exit points.\n\nFloorPlanView",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0d1b84c3bcaa419bbb9785da60a9c630",
+          "Name": "endPtsList",
+          "Description": "List of end (exit) points.\n\nPoint[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ac057473106a47dc8fc10c27c439ed67",
+          "Name": "PathOfTravel[]..[]",
+          "Description": "List of PathOfTravel elements corresponding to the longest of shortest exit paths from rooms.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Calculates the longest PathOfTravel(s) of all shortest paths from rooms in the floor plan to the specified exit points.\n\nPathOfTravel.LongestOfShortestExitPaths (floorPlan: FloorPlanView, endPtsList: Point[]): PathOfTravel[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.BoundingBox",
+      "Id": "ddbf9180a32b4495aad1507473e93336",
+      "Inputs": [
+        {
+          "Id": "104e43b49d744d0fb3a33d5c832a843c",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a0630f2097214885a77dcdb1dc1d1c23",
+          "Name": "BoundingBox",
+          "Description": "BoundingBox",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get an Axis-aligned BoundingBox of the Element\n\nElement.BoundingBox: BoundingBox"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.BoundingBox.ToCuboid",
+      "Id": "84fba652d72a4c3bb8f7f3df9f443c02",
+      "Inputs": [
+        {
+          "Id": "67fc7cbd0fad402cb287f102fc943970",
+          "Name": "boundingBox",
+          "Description": "Autodesk.DesignScript.Geometry.BoundingBox",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "2d84e7a4b9114b94a95d7ea6da1ea0c9",
+          "Name": "Cuboid",
+          "Description": "Returns cuboid representation of the bounding box.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get the bounding box as a solid cuboid.\n\nBoundingBox.ToCuboid ( ): Cuboid"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Solid.Centroid",
+      "Id": "5249c71e33e44556ab116dd38c0b6aa6",
+      "Inputs": [
+        {
+          "Id": "6b828c1ee7a043baad24a7d1b429c9e5",
+          "Name": "solid",
+          "Description": "Autodesk.DesignScript.Geometry.Solid",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "37b6b880c4984517bcb74e4fc95ec6f0",
+          "Name": "Point",
+          "Description": "Point",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "The centroid of the Solid\n\nSolid.Centroid ( ): Point"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "NodeType": "ExtensionNode",
+      "Id": "06915f3ff26b4efcb89d70c983099164",
+      "Inputs": [
+        {
+          "Id": "f0650d2aaeeb4b5487918a886cf7a4a1",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "c7960a7454664cc8910dfbc8fcdd9bb6",
+          "Name": "item1",
+          "Description": "Item Index #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "7f82c7ab9379425abdb32a24f85ef7e2",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# Import DocumentManager and TransactionManager\r\nimport clr\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n# Import RevitAPI\r\nclr.AddReference(\"RevitAPI\")\r\nimport Autodesk\r\nfrom Autodesk.Revit.DB import *\r\n\r\n# Set up inputs\r\nvalue = IN[0]\r\n\r\n# Execute definition\r\nprojectUnits = Document.GetUnits(doc).GetFormatOptions(SpecTypeId.Length).GetUnitTypeId()\r\nprojectDisplayUnits = LabelUtils.GetLabelForUnit(projectUnits)\r\n\r\nspeedUnits = Document.GetUnits(doc).GetFormatOptions(SpecTypeId.Speed).GetUnitTypeId()\r\nspeedDisplayUnits = LabelUtils.GetLabelForUnit(speedUnits)\r\n\r\n\r\n# Assign your output to the OUT variable\r\nOUT = projectDisplayUnits,speedDisplayUnits",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "044a4d2c8aaa420e86832be20347b499",
+      "Inputs": [
+        {
+          "Id": "00b1575e1e2346cfa91c6b585e5593b4",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "4f25bff3ff4b4c61b20cb329ea366da5",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "NodeType": "ExtensionNode",
+      "Id": "f337df2a9d2f49edac1f616df5a4c5cc",
+      "Inputs": [
+        {
+          "Id": "4e4597711dc54e27a5220dafeb73835d",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "344fda0d0f8c4852a073a7f6dd9465f5",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Revit.Elements.Element.GetParameterValueByName@string",
+      "Id": "4bb40f6facb043b7b2eb962d9ef06cc7",
+      "Inputs": [
+        {
+          "Id": "1bf88b3bac3e4dabbeb172197de7b263",
+          "Name": "element",
+          "Description": "Revit.Elements.Element",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "69e56c331a894d2f8e7e5b6b2111b7d9",
+          "Name": "parameterName",
+          "Description": "The name of the parameter whose value you want to obtain.\n\nstring",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fd260fd0538c4d77a9e8f85a688d862a",
+          "Name": "var[]..[]",
+          "Description": "var[]..[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Get the value of one of the element's parameters.\n\nElement.GetParameterValueByName (parameterName: string): var[]..[]"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//declare a few variables to combine for output\ntotalLength;\ntravelTime;\nspeed;\nlengthUnits;\nspeedUnits;\n//build output\n//first line prefix + count + return line\nstring1 + totalLength + \" \" + lengthUnits + string2 + \"\\n\" +\nstring3 + travelTime + string4 + speed + \" \" + speedUnits;",
+      "Id": "4cc325ff28174a17abe2d8e2c99d70a6",
+      "Inputs": [
+        {
+          "Id": "717fefe0117d4078842a64fe5bf36e05",
+          "Name": "totalLength",
+          "Description": "totalLength",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "9984a05b87f8437887874c4a84f6fc92",
+          "Name": "travelTime",
+          "Description": "travelTime",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ae87223b0423493d8f3d453516517843",
+          "Name": "speed",
+          "Description": "speed",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "20eb227316914106bd569883aeb2ea15",
+          "Name": "lengthUnits",
+          "Description": "lengthUnits",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "026654f33d30495fb9a4e20696c7881e",
+          "Name": "speedUnits",
+          "Description": "speedUnits",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ab1e8b55d09f4156a80b592147e254a4",
+          "Name": "string1",
+          "Description": "string1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3e6c69b17b1149688f17c8e089549f68",
+          "Name": "string2",
+          "Description": "string2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "39367c7493d9470182175e64db6e19ca",
+          "Name": "string3",
+          "Description": "string3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d7b85896a4ab45339cf54b2868a70588",
+          "Name": "string4",
+          "Description": "string4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "82fc173b893d4d438523919a95b0995e",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0dd64a3eb1cf498a937485a68aa4f90a",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "8259c9b403b74961a000d4020d1551f2",
+          "Name": "",
+          "Description": "Value of expression at line 4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "eb43cf33553e4e708feea2427030c13a",
+          "Name": "",
+          "Description": "Value of expression at line 5",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ca5dabffc9da4d82a83084d679d2b067",
+          "Name": "",
+          "Description": "Value of expression at line 6",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b56929798a0746759a97ea51d337e43b",
+          "Name": "",
+          "Description": "Value of expression at line 9",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "NodeType": "ExtensionNode",
+      "Id": "436ac37e66a942f799dfe417f8856252",
+      "Inputs": [
+        {
+          "Id": "8008b9c17c3b40b0bba77f545c33782f",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "681e9e80ff45469ab4e9a10c77492cda",
+          "Name": "item1",
+          "Description": "Item Index #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "84efa5473a144669bc5a4b43593543df",
+          "Name": "item2",
+          "Description": "Item Index #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5c6ff591243947739159fed73967e442",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "totalLength = data[0];\ntravelTime = data[1];\nspeed = data[2];",
+      "Id": "7f7f01043d884a3d85aa0b9fbd436e5b",
+      "Inputs": [
+        {
+          "Id": "529fc8898d9744a8b7263c537b451db3",
+          "Name": "data",
+          "Description": "data",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "952440f598ef43c69ef0d10a3046647b",
+          "Name": "",
+          "Description": "totalLength",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b1178ce4ad3342ac9cc7e79b5b86fdc5",
+          "Name": "",
+          "Description": "travelTime",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "53ba7a79fc4040dba1853b06370513b6",
+          "Name": "",
+          "Description": "speed",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "lengthUnits = data[0];\nspeedUnits = data[1];",
+      "Id": "4f7e48f893584764a0d740f601d274b5",
+      "Inputs": [
+        {
+          "Id": "e79ca042bda643078fdbb89a3c8aab93",
+          "Name": "data",
+          "Description": "data",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "1e178fd9e3f64611905e3040a837b753",
+          "Name": "",
+          "Description": "lengthUnits",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "5cf0ae4e84134a84b91e47ca78b6c99f",
+          "Name": "",
+          "Description": "speedUnits",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Length",
+      "Id": "2ac478ec4cac49e09c2605e2d1d1b487",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "00fc2cffb6174840b584c8012560a456",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Time",
+      "Id": "b2de327fb7b64a9b9055b1a09ec2fd81",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fa9d1a2def114b0fb8da1113e864b74e",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "NodeType": "StringInputNode",
+      "InputValue": "Speed",
+      "Id": "be4de8a1bf2e4e2c88a3bbc2540b424d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fed562d1e90c497c87fd042ff2b0a5fe",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "\"Longest Path is: \";\n\" long\";\n\"Total Travel Time: \";\n\" seconds @ \";",
+      "Id": "cf99aad630494bbd80bbf41747e981c2",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "1a31374bff374fd7a8bfb43a78d31714",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "29a64933e70148f19dc11a84275957c3",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a60d08428641464e84bc78121a8c9989",
+          "Name": "",
+          "Description": "Value of expression at line 3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "40a714c0a61545158f1b7b9c5b1022f2",
+          "Name": "",
+          "Description": "Value of expression at line 4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 173,
+      "SelectedString": "OST_Doors",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [],
+      "Id": "ea9a5849c6804d20b34f52e2b7cc4849",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "27fa6692c6804e8582b804c77d9f377f",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    },
+    {
+      "ConcreteType": "Dynamo.ComboNodes.DSModelElementByCategorySelection, DSRevitNodesUI",
+      "SelectedIndex": 173,
+      "SelectedString": "OST_Doors",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [],
+      "Id": "4f50efa574ec42a6b89fad5e2e2a344c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "7cdd402f83b84e7dbd20ed743f5815aa",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "7c7f07ae0d514072a9ea66bb4f7d7404",
+      "End": "369047479c6e48b58ea9aec68fc0c368",
+      "Id": "5239e51b84af44e5a5e43f7af96b1264",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "6e22a549918b43beb5f205198218648a",
+      "End": "72d9496988704b6a809191eca2e34805",
+      "Id": "e3606708cc5442158219079019137078",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ac057473106a47dc8fc10c27c439ed67",
+      "End": "1bf88b3bac3e4dabbeb172197de7b263",
+      "Id": "a07c30684e314186bb12e76b4eaeccef",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a0630f2097214885a77dcdb1dc1d1c23",
+      "End": "67fc7cbd0fad402cb287f102fc943970",
+      "Id": "75499abe7e9f4078934503809e25a9fd",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "2d84e7a4b9114b94a95d7ea6da1ea0c9",
+      "End": "6b828c1ee7a043baad24a7d1b429c9e5",
+      "Id": "135a5e721547457d96c5f741bf44bb9f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "37b6b880c4984517bcb74e4fc95ec6f0",
+      "End": "0d1b84c3bcaa419bbb9785da60a9c630",
+      "Id": "88b0d45d141b42c8a0ef767aa8ddb131",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7f82c7ab9379425abdb32a24f85ef7e2",
+      "End": "104e43b49d744d0fb3a33d5c832a843c",
+      "Id": "a6e5ad45208149399aeb7fc13f746bb2",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "4f25bff3ff4b4c61b20cb329ea366da5",
+      "End": "e79ca042bda643078fdbb89a3c8aab93",
+      "Id": "fa710ba3f11f43e988dca82e5d00a1c0",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fd260fd0538c4d77a9e8f85a688d862a",
+      "End": "529fc8898d9744a8b7263c537b451db3",
+      "Id": "3a9e0bed8ebc47c58191158bbf55fbaa",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b56929798a0746759a97ea51d337e43b",
+      "End": "4e4597711dc54e27a5220dafeb73835d",
+      "Id": "8d00f01a053c4f70ac9aee88656dfe7b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5c6ff591243947739159fed73967e442",
+      "End": "69e56c331a894d2f8e7e5b6b2111b7d9",
+      "Id": "121263571b3d47c6968cf0a3485f1947",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "952440f598ef43c69ef0d10a3046647b",
+      "End": "717fefe0117d4078842a64fe5bf36e05",
+      "Id": "c8479cd49cf648b0a8e944c77cef482a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b1178ce4ad3342ac9cc7e79b5b86fdc5",
+      "End": "9984a05b87f8437887874c4a84f6fc92",
+      "Id": "415897e58b66460abc62d9a9855ae7c1",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "53ba7a79fc4040dba1853b06370513b6",
+      "End": "ae87223b0423493d8f3d453516517843",
+      "Id": "aeeaff68e7c14e4885277a412f11e424",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "1e178fd9e3f64611905e3040a837b753",
+      "End": "20eb227316914106bd569883aeb2ea15",
+      "Id": "170fbf80ce034598999e476d43128677",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5cf0ae4e84134a84b91e47ca78b6c99f",
+      "End": "026654f33d30495fb9a4e20696c7881e",
+      "Id": "35cb5a242ceb45d8b9185d7e58bcd27e",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "00fc2cffb6174840b584c8012560a456",
+      "End": "8008b9c17c3b40b0bba77f545c33782f",
+      "Id": "470d612d4054498297e9023b43f80a1b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fa9d1a2def114b0fb8da1113e864b74e",
+      "End": "681e9e80ff45469ab4e9a10c77492cda",
+      "Id": "8224b40ea3fe472da4ed432c0675017f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fed562d1e90c497c87fd042ff2b0a5fe",
+      "End": "84efa5473a144669bc5a4b43593543df",
+      "Id": "b1bba67007744ce1a566b73a34ab178f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "1a31374bff374fd7a8bfb43a78d31714",
+      "End": "ab1e8b55d09f4156a80b592147e254a4",
+      "Id": "2ee9da01422a436b9c12814e0a700b1d",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "29a64933e70148f19dc11a84275957c3",
+      "End": "3e6c69b17b1149688f17c8e089549f68",
+      "Id": "b1fe7892f3cc456099128003acfd4ed3",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a60d08428641464e84bc78121a8c9989",
+      "End": "39367c7493d9470182175e64db6e19ca",
+      "Id": "8ff423e7358f455eba44fd7929979c14",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "40a714c0a61545158f1b7b9c5b1022f2",
+      "End": "d7b85896a4ab45339cf54b2868a70588",
+      "Id": "c4365a91468049b7a0d3f0844a6ee94a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "27fa6692c6804e8582b804c77d9f377f",
+      "End": "f0650d2aaeeb4b5487918a886cf7a4a1",
+      "Id": "63ede6d2bd6f4c68b4a5722b9ecb8e30",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7cdd402f83b84e7dbd20ed743f5815aa",
+      "End": "c7960a7454664cc8910dfbc8fcdd9bb6",
+      "Id": "b56d13bca6f24f17906787273aaa6db1",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "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",
+  "GraphDocumentationURL": "https://help.autodesk.com/view/RVT/2026/ENU/?guid=RevitDynamo_Dynamo_Player_Sample_Graphs_Calculate_Longest_Exit_Distance_html",
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.13",
+      "Data": {
+        "Model Preparation": "The model must have rooms and the active view must be a floor plan view."
+      }
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "2.0",
+      "Data": {}
+    }
+  ],
+  "Author": "Autodesk",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.17.0.3472",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": 443.0771484375,
+      "EyeY": 4254.35546875,
+      "EyeZ": 6071.79443359375,
+      "LookX": -2404.762451171875,
+      "LookY": -3149.35546875,
+      "LookZ": -2989.78271484375,
+      "UpX": -0.2845379114151001,
+      "UpY": 0.891006588935852,
+      "UpZ": -0.35375934839248657
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Document.Current",
+        "ShowGeometry": true,
+        "Id": "3d63828be0be4fec9d312fe2e2c5e22d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6312.1356392478556,
+        "Y": 1535.8195958012293
+      },
+      {
+        "Name": "Document.ActiveView",
+        "ShowGeometry": true,
+        "Id": "309fedfbd05048efb2b914e67aee7f66",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6060.9586389840051,
+        "Y": 1535.8195958012293
+      },
+      {
+        "Name": "PathOfTravel.LongestOfShortestExitPaths",
+        "ShowGeometry": true,
+        "Id": "5f5a20ba4bf54576a83082245b3183bc",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5694.0563986254147,
+        "Y": 1601.6452811124977
+      },
+      {
+        "Name": "Element.BoundingBox",
+        "ShowGeometry": true,
+        "Id": "ddbf9180a32b4495aad1507473e93336",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6541.9995303405685,
+        "Y": 1781.7059354028504
+      },
+      {
+        "Name": "BoundingBox.ToCuboid",
+        "ShowGeometry": false,
+        "Id": "84fba652d72a4c3bb8f7f3df9f443c02",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6271.9995303405685,
+        "Y": 1781.7059354028504
+      },
+      {
+        "Name": "Solid.Centroid",
+        "ShowGeometry": false,
+        "Id": "5249c71e33e44556ab116dd38c0b6aa6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6006.9995303405685,
+        "Y": 1781.7059354028504
+      },
+      {
+        "Name": "List Create",
+        "ShowGeometry": true,
+        "Id": "06915f3ff26b4efcb89d70c983099164",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -6716.9995303405685,
+        "Y": 1781.7059354028504
+      },
+      {
+        "Name": "GetProjectUnits",
+        "ShowGeometry": true,
+        "Id": "044a4d2c8aaa420e86832be20347b499",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -4892.6137011999663,
+        "Y": 2521.0625092870232
+      },
+      {
+        "Name": "Calculation Results",
+        "ShowGeometry": true,
+        "Id": "f337df2a9d2f49edac1f616df5a4c5cc",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "X": -3530.7360772059214,
+        "Y": 1939.7507258934281
+      },
+      {
+        "Name": "Element.GetParameterValueByName",
+        "ShowGeometry": true,
+        "Id": "4bb40f6facb043b7b2eb962d9ef06cc7",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5044.920606416772,
+        "Y": 2020.1677575124982
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "4cc325ff28174a17abe2d8e2c99d70a6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -4222.2396615553425,
+        "Y": 1931.2156009976002
+      },
+      {
+        "Name": "List Create",
+        "ShowGeometry": true,
+        "Id": "436ac37e66a942f799dfe417f8856252",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5299.920606416772,
+        "Y": 2054.1677575124977
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "7f7f01043d884a3d85aa0b9fbd436e5b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -4566.73449404814,
+        "Y": 1932.9698902085636
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "4f7e48f893584764a0d740f601d274b5",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -4565.9824865703431,
+        "Y": 2094.548123356697
+      },
+      {
+        "Name": "String",
+        "ShowGeometry": true,
+        "Id": "2ac478ec4cac49e09c2605e2d1d1b487",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5542.920606416772,
+        "Y": 1937.1677575124979
+      },
+      {
+        "Name": "String",
+        "ShowGeometry": true,
+        "Id": "b2de327fb7b64a9b9055b1a09ec2fd81",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5542.920606416772,
+        "Y": 2088.1677575124977
+      },
+      {
+        "Name": "String",
+        "ShowGeometry": true,
+        "Id": "be4de8a1bf2e4e2c88a3bbc2540b424d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -5542.920606416772,
+        "Y": 2239.1677575124977
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "cf99aad630494bbd80bbf41747e981c2",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -4565.2158176030962,
+        "Y": 2268.1629865392197
+      },
+      {
+        "Name": "Select Exit Door 1",
+        "ShowGeometry": true,
+        "Id": "ea9a5849c6804d20b34f52e2b7cc4849",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -7213.5125108516422,
+        "Y": 1520.693584969601
+      },
+      {
+        "Name": "Select Exit Door 2",
+        "ShowGeometry": true,
+        "Id": "4f50efa574ec42a6b89fad5e2e2a344c",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -7213.1458721194913,
+        "Y": 1815.9142523876469
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "5fa060b11d414843811e14e87534022b",
+        "Title": "Path of Travel",
+        "DescriptionText": "Calculate Longest Exit Distance",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "5e83a45ffbb74a03b6783f3878ece4a2"
+        ],
+        "HasNestedGroups": false,
+        "Left": -7511.7067463888425,
+        "Top": 1307.2411422339019,
+        "Width": 269.5,
+        "Height": 122.5,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1380.2411422339019,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFFFFF"
+      },
+      {
+        "Id": "b17f315c2ab64238b5d15daebdb44311",
+        "Title": "Exit points",
+        "DescriptionText": "Collect list of end points at exits",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "ddbf9180a32b4495aad1507473e93336",
+          "84fba652d72a4c3bb8f7f3df9f443c02",
+          "5249c71e33e44556ab116dd38c0b6aa6",
+          "06915f3ff26b4efcb89d70c983099164"
+        ],
+        "HasNestedGroups": false,
+        "Left": -6726.9995303405685,
+        "Top": 1708.7059354028504,
+        "Width": 920.0,
+        "Height": 235.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1781.7059354028504,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFE8F7AD"
+      },
+      {
+        "Id": "3aa3eac1e9b44c7c8eed65f415a7ebfd",
+        "Title": "START HERE!",
+        "DescriptionText": "Use the select buttons and select two exit doors in the Revit model. Then press Run in the lower left of the Dynamo application window to run the script.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "ea9a5849c6804d20b34f52e2b7cc4849",
+          "4f50efa574ec42a6b89fad5e2e2a344c",
+          "bb0ac9684e4b421bb7bab2352c4531f7",
+          "55d729f6231148e781bc51629d2d7203"
+        ],
+        "HasNestedGroups": false,
+        "Left": -7223.5125108516422,
+        "Top": 1303.693584969601,
+        "Width": 415.86663873215093,
+        "Height": 689.22066741804588,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1399.693584969601,
+        "InitialHeight": 575.23075984828529,
+        "TextblockHeight": 86.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "bc279d293ca344d4b461a2c753beb2c1",
+        "Title": "Floor Plan View to Use",
+        "DescriptionText": "Uses the active view (Must be a floor plan view) to calculate the longest exit. Note: The model must have rooms.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "3d63828be0be4fec9d312fe2e2c5e22d",
+          "309fedfbd05048efb2b914e67aee7f66"
+        ],
+        "HasNestedGroups": false,
+        "Left": -6322.1356392478556,
+        "Top": 1453.8195958012293,
+        "Width": 506.67700026385046,
+        "Height": 214.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1535.8195958012293,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 72.0,
+        "Background": "#FFE8F7AD"
+      },
+      {
+        "Id": "49e5d2e551034742bc64083e3dbcb3fb",
+        "Title": "Calculation",
+        "DescriptionText": "Calculate longest path of travel for current floor plan view",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "5f5a20ba4bf54576a83082245b3183bc"
+        ],
+        "HasNestedGroups": false,
+        "Left": -5704.0563986254147,
+        "Top": 1528.6452811124977,
+        "Width": 406.0,
+        "Height": 235.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1601.6452811124977,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFC999"
+      },
+      {
+        "Id": "9e4fce9a50b64a8f9b0f5a60f107e0f8",
+        "Title": "Build Output",
+        "DescriptionText": "combine strings and return output for Dynamo Player. By using addition in a code block we convert numbers to string automatically",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "f337df2a9d2f49edac1f616df5a4c5cc",
+          "4cc325ff28174a17abe2d8e2c99d70a6",
+          "7f7f01043d884a3d85aa0b9fbd436e5b",
+          "4f7e48f893584764a0d740f601d274b5",
+          "cf99aad630494bbd80bbf41747e981c2"
+        ],
+        "HasNestedGroups": false,
+        "Left": -4576.73449404814,
+        "Top": 1865.2156009976002,
+        "Width": 1332.9984168422184,
+        "Height": 577.4473855416195,
+        "FontSize": 30.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1931.2156009976002,
+        "InitialHeight": 481.9473855416195,
+        "TextblockHeight": 56.0,
+        "Background": "#FFFFC999"
+      },
+      {
+        "Id": "4fea801ba6de410e864fad3d0a8e48ff",
+        "Title": "Get Units",
+        "DescriptionText": "Retrieve units from file for output.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "044a4d2c8aaa420e86832be20347b499"
+        ],
+        "HasNestedGroups": false,
+        "Left": -4902.6137011999663,
+        "Top": 2439.0625092870232,
+        "Width": 211.0,
+        "Height": 214.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 2521.0625092870232,
+        "InitialHeight": 145.0,
+        "TextblockHeight": 72.0,
+        "Background": "#FFE8F7AD"
+      },
+      {
+        "Id": "15dd7a97e876416587d47ad217f0c05c",
+        "Title": "Data Extraction",
+        "DescriptionText": "Get parameters for output",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "4bb40f6facb043b7b2eb962d9ef06cc7",
+          "436ac37e66a942f799dfe417f8856252",
+          "2ac478ec4cac49e09c2605e2d1d1b487",
+          "b2de327fb7b64a9b9055b1a09ec2fd81",
+          "be4de8a1bf2e4e2c88a3bbc2540b424d"
+        ],
+        "HasNestedGroups": false,
+        "Left": -5552.920606416772,
+        "Top": 1864.1677575124979,
+        "Width": 864.0,
+        "Height": 506.99999999999977,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 1937.1677575124979,
+        "InitialHeight": 446.99999999999977,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFC999"
+      },
+      {
+        "Id": "5e83a45ffbb74a03b6783f3878ece4a2",
+        "Title": "See graph properties for more information",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": -7501.7067463888425,
+        "Top": 1388.2411422339019,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "bb0ac9684e4b421bb7bab2352c4531f7",
+        "Title": "Using a floor plan view, select an exit door in a room.",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": -7150.7625108516422,
+        "Top": 1407.693584969601,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676",
+        "PinnedNode": "ea9a5849c6804d20b34f52e2b7cc4849"
+      },
+      {
+        "Id": "55d729f6231148e781bc51629d2d7203",
+        "Title": "Select another exit door.",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": -7091.8958721194913,
+        "Top": 1717.4142523876469,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "00000000-0000-0000-0000-000000000000",
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676",
+        "PinnedNode": "4f50efa574ec42a6b89fad5e2e2a344c"
+      }
+    ],
+    "X": 2765.4576232023278,
+    "Y": -268.8351481685869,
+    "Zoom": 0.3646447022897979
+  }
+}

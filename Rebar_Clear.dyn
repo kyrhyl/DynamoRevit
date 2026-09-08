@@ -1,0 +1,207 @@
+{
+  "Uuid": "a30bc20d-4686-417e-98e0-95c27d839fde",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "Rebar_Clear",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [
+    {
+      "Id": "872e3deeb1f34bfd83caf060740ca2b2",
+      "Name": "Select Model Element",
+      "Type": "selection",
+      "Type2": "hostSelection",
+      "Value": "f13944ee-1ae4-443a-ae4f-a9ad342f3528-000587f9",
+      "Description": "Select a model element from the document."
+    }
+  ],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Nodes.DSModelElementSelection, DSRevitNodesUI",
+      "NodeType": "ExtensionNode",
+      "InstanceId": [
+        "f13944ee-1ae4-443a-ae4f-a9ad342f3528-000587f9"
+      ],
+      "Id": "872e3deeb1f34bfd83caf060740ca2b2",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "0d44cd0ae11e4b59b1aea6995899f03c",
+          "Name": "Element",
+          "Description": "The selected elements.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Select a model element from the document."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# ============================================================\r\n# R00 — DELETE ALL REBAR FROM SELECTED HOST ELEMENTS\r\n#\r\n# Dynamo / Revit Python\r\n#\r\n# IN[0] = Selected Revit element OR list of elements\r\n#\r\n# Supported hosts:\r\n#   - Structural Columns\r\n#   - Structural Framing / Beams\r\n#   - Floors / Slabs\r\n#   - Walls\r\n#   - Foundations\r\n#   - Other valid Rebar hosts\r\n#\r\n# ACTION:\r\n#   Finds all Rebar elements whose HostId matches the\r\n#   selected element(s), then deletes those rebars.\r\n#\r\n# OUT:\r\n# [0] Deleted Rebar Count\r\n# [1] Deleted Rebar IDs\r\n# [2] Selected Host IDs\r\n# [3] Status\r\n# ============================================================\r\n\r\nimport clr\r\n\r\n# ------------------------------------------------------------\r\n# REVIT SERVICES\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitServices\")\r\n\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\n\r\n# ------------------------------------------------------------\r\n# REVIT API\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitAPI\")\r\n\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import Rebar\r\n\r\n\r\n# ------------------------------------------------------------\r\n# DYNAMO / REVIT NODES\r\n# ------------------------------------------------------------\r\n\r\nclr.AddReference(\"RevitNodes\")\r\n\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\n\r\n# ------------------------------------------------------------\r\n# INPUT\r\n# ------------------------------------------------------------\r\n\r\ninput_elements = IN[0]\r\n\r\nif input_elements is None:\r\n    OUT = [\r\n        0,\r\n        [],\r\n        [],\r\n        \"No element selected.\"\r\n    ]\r\n\r\nelse:\r\n\r\n    # --------------------------------------------------------\r\n    # FORCE INPUT INTO LIST\r\n    # --------------------------------------------------------\r\n\r\n    if isinstance(input_elements, list):\r\n        elements = input_elements\r\n    else:\r\n        elements = [input_elements]\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # UNWRAP DYNAMO ELEMENTS\r\n    # --------------------------------------------------------\r\n\r\n    hosts = []\r\n\r\n    for item in elements:\r\n\r\n        if item is None:\r\n            continue\r\n\r\n        try:\r\n            element = UnwrapElement(item)\r\n        except:\r\n            element = item\r\n\r\n        if element is not None:\r\n            hosts.append(element)\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # HOST IDS\r\n    # --------------------------------------------------------\r\n\r\n    host_ids = set()\r\n    host_id_output = []\r\n\r\n    for host in hosts:\r\n\r\n        try:\r\n\r\n            host_id = host.Id\r\n\r\n            try:\r\n                host_id_value = host_id.Value\r\n            except:\r\n                host_id_value = host_id.IntegerValue\r\n\r\n            host_ids.add(host_id_value)\r\n            host_id_output.append(host_id_value)\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # COLLECT ALL REBAR\r\n    # --------------------------------------------------------\r\n\r\n    all_rebars = FilteredElementCollector(doc) \\\r\n        .OfClass(Rebar) \\\r\n        .WhereElementIsNotElementType() \\\r\n        .ToElements()\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # FIND REBAR HOSTED BY SELECTED ELEMENTS\r\n    # --------------------------------------------------------\r\n\r\n    rebars_to_delete = []\r\n    rebar_id_output = []\r\n\r\n    for rebar in all_rebars:\r\n\r\n        try:\r\n\r\n            host_id = rebar.GetHostId()\r\n\r\n            if host_id is None:\r\n                continue\r\n\r\n            try:\r\n                host_id_value = host_id.Value\r\n            except:\r\n                host_id_value = host_id.IntegerValue\r\n\r\n            if host_id_value in host_ids:\r\n\r\n                rebars_to_delete.append(rebar)\r\n\r\n                try:\r\n                    rebar_id_output.append(rebar.Id.Value)\r\n                except:\r\n                    rebar_id_output.append(rebar.Id.IntegerValue)\r\n\r\n        except:\r\n            pass\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # DELETE REBAR\r\n    # --------------------------------------------------------\r\n\r\n    deleted_count = 0\r\n    errors = []\r\n\r\n    if len(rebars_to_delete) > 0:\r\n\r\n        TransactionManager.Instance.EnsureInTransaction(doc)\r\n\r\n        for rebar in rebars_to_delete:\r\n\r\n            try:\r\n\r\n                doc.Delete(rebar.Id)\r\n                deleted_count += 1\r\n\r\n            except Exception as ex:\r\n\r\n                errors.append(str(ex))\r\n\r\n        TransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # STATUS\r\n    # --------------------------------------------------------\r\n\r\n    if len(hosts) == 0:\r\n\r\n        status = \"No valid Revit host elements received.\"\r\n\r\n    elif deleted_count == 0:\r\n\r\n        status = \"No hosted rebars found.\"\r\n\r\n    else:\r\n\r\n        status = \"Successfully deleted {} rebar element(s).\".format(\r\n            deleted_count\r\n        )\r\n\r\n    if len(errors) > 0:\r\n\r\n        status += \" {} deletion error(s).\".format(\r\n            len(errors)\r\n        )\r\n\r\n\r\n    # --------------------------------------------------------\r\n    # OUTPUT\r\n    # --------------------------------------------------------\r\n\r\n    OUT = [\r\n        deleted_count,\r\n        rebar_id_output,\r\n        host_id_output,\r\n        status\r\n    ]",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "78c9376fe0fc4e059cee93c45b776940",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "c839ac2b0ecd43ab844b34ee31b05990",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "12ab233a94fe494bbc56c9912b23bdcb",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 200.0,
+      "WatchHeight": 200.0,
+      "Id": "b7475dfa405641aab1efe67c85e277f8",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "8f078f64c47e407fbb680f84d124e808",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fd24f1ccd2284c5fbe94f6b53f41c5be",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "0d44cd0ae11e4b59b1aea6995899f03c",
+      "End": "c839ac2b0ecd43ab844b34ee31b05990",
+      "Id": "a833102a02894fd6ad0f0de83fecf530",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "12ab233a94fe494bbc56c9912b23bdcb",
+      "End": "8f078f64c47e407fbb680f84d124e808",
+      "Id": "50052453ef094a4cb98f61b5e16a5f28",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.6",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "9.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.6.0.9395",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "872e3deeb1f34bfd83caf060740ca2b2",
+        "Name": "Select Model Element",
+        "IsSetAsInput": true,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 86.7875008450439,
+        "Y": 85.40781418537354
+      },
+      {
+        "Id": "78c9376fe0fc4e059cee93c45b776940",
+        "Name": "S01",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 413.0,
+        "Y": 169.0
+      },
+      {
+        "Id": "b7475dfa405641aab1efe67c85e277f8",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 667.0,
+        "Y": 136.0
+      }
+    ],
+    "Annotations": [],
+    "X": 63.51556304567322,
+    "Y": -130.04820582313613,
+    "Zoom": 0.8631476257653251
+  }
+}
